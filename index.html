@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Школьный Информационный Стенд</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="main-header">
+            <div class="school-brand">
+                <div class="logo-placeholder">
+                    <span class="material-icons-round">school</span>
+                </div>
+                <div class="titles">
+                    <h1>Школьный стенд</h1>
+                    <p>МБОУ СОШ №4</p>
+                </div>
+            </div>
+            
+            <div class="datetime-block">
+                <div id="clock">20:42</div>
+                <div id="date">13 апреля, понедельник</div>
+            </div>
+        </header>
+
+        <main class="content-viewport">
+            
+            <section id="news" class="content-section active">
+                <div class="section-wrapper">
+                    <div class="section-title">
+                        <span class="material-icons-round">campaign</span>
+                        <h2>Последние новости</h2>
+                    </div>
+                    <div class="news-grid" id="news-container">
+                        </div>
+                </div>
+            </section>
+
+            <section id="navigation" class="content-section">
+    <div class="section-wrapper">
+        <div class="section-title">
+            <span class="material-icons-round">explore</span>
+            <h2>Навигация и поиск кабинетов</h2>
+        </div>
+        
+        <div class="nav-container">
+            <div class="search-column">
+                <div class="search-wrapper">
+                    <span class="material-icons-round">search</span>
+                    <input type="text" id="roomSearch" placeholder="Введите номер кабинета или фамилию учителя..." oninput="filterRooms(this.value)">
+                </div>
+                
+                <div id="nav-content" class="rooms-grid">
+                    </div>
+            </div>
+
+            <div class="map-column">
+                <div class="map-placeholder">
+                    <span class="material-icons-round">map</span>
+                    <p>Интерактивный план этажа</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+            <section id="schedule" class="content-section">
+                <div class="section-wrapper">
+                    <div class="section-title">
+                        <span class="material-icons-round">event_note</span>
+                        <h2>Расписание занятий</h2>
+                    </div>
+                    <div id="schedule-container"></div>
+                </div>
+            </section>
+
+            <section id="canteen" class="content-section">
+                <div class="section-wrapper">
+                    <div class="section-title">
+                        <span class="material-icons-round">restaurant</span>
+                        <h2>Меню столовой</h2>
+                    </div>
+                    <div id="canteen-container"></div>
+                </div>
+            </section>
+
+            <section id="info" class="content-section">
+                <div class="section-wrapper">
+                    <div class="section-title">
+                        <span class="material-icons-round">info</span>
+                        <h2>Информация для поступающих</h2>
+                    </div>
+                    <div id="info-container"></div>
+                </div>
+            </section>
+
+        </main>
+
+        <nav class="main-nav">
+            <button class="nav-btn active" onclick="openSection('news')">
+                <span class="material-icons-round">feed</span>
+                <label>Новости</label>
+            </button>
+            <button class="nav-btn" onclick="openSection('navigation')">
+                <span class="material-icons-round">explore</span>
+                <label>Навигация</label>
+            </button>
+            <button class="nav-btn" onclick="openSection('schedule')">
+                <span class="material-icons-round">today</span>
+                <label>Расписание</label>
+            </button>
+            <button class="nav-btn" onclick="openSection('canteen')">
+                <span class="material-icons-round">silverware_clean</span>
+                <label>Столовая</label>
+            </button>
+            <button class="nav-btn" onclick="openSection('info')">
+                <span class="material-icons-round">assignment</span>
+                <label>Инфо</label>
+            </button>
+        </nav>
+    </div>
+
+    <script src="logic.js"></script>
+</body>
+</html>

@@ -1,0 +1,257 @@
+/* 1. ПЕРЕМЕННЫЕ И ОБЩИЕ СТИЛИ */
+:root {
+    --bg-color: #f0f2f5;
+    --primary: #2563eb;    
+    --primary-dark: #1e40af;
+    --white: #ffffff;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --nav-bg: #1e293b; /* Цвет нижней панели */
+    --shadow: 0 10px 25px rgba(0,0,0,0.08);
+    --radius: 20px;
+    --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    width: 1920px; 
+    height: 1080px;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    overflow: hidden; 
+}
+
+.app-container {
+    display: grid;
+    grid-template-rows: 120px 1fr 140px; 
+    height: 100vh;
+}
+
+/* 2. ШАПКА */
+.main-header {
+    background: var(--white);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 60px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    z-index: 10;
+}
+
+.school-brand {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo-placeholder {
+    width: 65px;
+    height: 65px;
+    background: var(--primary);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.titles h1 { font-size: 32px; color: var(--text-main); }
+.titles p { font-size: 18px; color: var(--text-muted); }
+
+.datetime-block { text-align: right; }
+#clock { font-size: 42px; font-weight: 800; color: var(--primary); line-height: 1; }
+#date { font-size: 18px; color: var(--text-muted); margin-top: 5px; }
+
+/* 3. КОНТЕНТ И АНИМАЦИИ */
+.content-viewport {
+    position: relative;
+    padding: 40px 60px;
+}
+
+.content-section {
+    display: none; 
+    height: 100%;
+    width: 100%;
+}
+
+.content-section.active {
+    display: block; 
+    animation: fadeInSlide 0.6s ease-out forwards;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.section-wrapper {
+    height: 100%;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.section-title h2 { font-size: 40px; font-weight: 700; }
+.section-title .material-icons-round { font-size: 45px; color: var(--primary); }
+
+/* 4. НИЖНЯЯ НАВИГАЦИЯ (ИСПРАВЛЕНО) */
+.main-nav {
+    background: var(--nav-bg);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    padding: 0 40px;
+    z-index: 100;
+}
+
+.nav-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: #94a3b8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 200px;
+    height: 100px;
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    pointer-events: auto;
+}
+
+.nav-btn .material-icons-round { font-size: 35px; }
+.nav-btn label { font-size: 18px; font-weight: 600; cursor: pointer; }
+
+.nav-btn.active {
+    background: var(--primary);
+    color: var(--white);
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
+}
+
+.nav-btn:hover:not(.active) {
+    background: rgba(255,255,255,0.1);
+    color: var(--white);
+}
+
+/* 5. РАЗДЕЛ НАВИГАЦИИ (КАБИНЕТЫ И ПОИСК) */
+.nav-container {
+    display: grid;
+    grid-template-columns: 1fr 450px; 
+    gap: 30px;
+    height: calc(100% - 100px);
+}
+
+.search-wrapper {
+    background: var(--white);
+    display: flex;
+    align-items: center;
+    padding: 20px 30px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 30px;
+    gap: 15px;
+}
+
+.search-wrapper input {
+    border: none;
+    outline: none;
+    font-size: 24px;
+    width: 100%;
+    color: var(--text-main);
+    background: transparent;
+}
+
+.rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    max-height: 550px; 
+    overflow-y: auto; 
+    padding-right: 15px;
+}
+
+/* Красивый скроллбар */
+.rooms-grid::-webkit-scrollbar { width: 8px; }
+.rooms-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+.room-card {
+    background: var(--white);
+    padding: 25px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.03);
+    border-left: 6px solid var(--primary);
+    transition: var(--transition);
+}
+
+.room-num {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--primary);
+    min-width: 70px;
+}
+
+.room-info strong { font-size: 22px; display: block; color: var(--text-main); }
+.room-info p { color: var(--text-muted); font-size: 18px; margin-top: 4px; }
+
+.map-column {
+    background: #e2e8f0;
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 3px dashed #cbd5e1;
+}
+
+.map-placeholder { text-align: center; color: #94a3b8; }
+.map-placeholder .material-icons-round { font-size: 80px; margin-bottom: 10px; }
+
+/* 6. НОВОСТИ */
+.news-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.news-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.news-img {
+    height: 250px;
+    background: #cbd5e1;
+    background-size: cover;
+    background-position: center;
+}
+
+.news-content { padding: 30px; }
+.news-content h3 { font-size: 24px; margin-bottom: 15px; }
+.news-content p { color: var(--text-muted); line-height: 1.6; font-size: 18px; }
