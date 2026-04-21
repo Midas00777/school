@@ -47,7 +47,7 @@
             <span class="material-icons-round">explore</span>
             <h2>Навигация и поиск кабинетов</h2>
         </div>
-        
+    
         <div class="nav-container">
             <div class="search-column">
                 <div class="search-wrapper">
@@ -98,33 +98,37 @@
                     <div id="info-container"></div>
                 </div>
             </section>
-
+            
         </main>
-
+        
         <nav class="main-nav">
-            <button class="nav-btn active" onclick="openSection('news')">
-                <span class="material-icons-round">feed</span>
-                <label>Новости</label>
-            </button>
-            <button class="nav-btn" onclick="openSection('navigation')">
-                <span class="material-icons-round">explore</span>
-                <label>Навигация</label>
-            </button>
-            <button class="nav-btn" onclick="openSection('schedule')">
-                <span class="material-icons-round">today</span>
-                <label>Расписание</label>
-            </button>
-            <button class="nav-btn" onclick="openSection('canteen')">
-                <span class="material-icons-round">silverware_clean</span>
-                <label>Столовая</label>
-            </button>
-            <button class="nav-btn" onclick="openSection('info')">
-                <span class="material-icons-round">assignment</span>
-                <label>Инфо</label>
-            </button>
-        </nav>
-    </div>
+    <button class="nav-btn active" onclick="openSection('news', this)">
+        <span class="material-icons-round">feed</span>
+        <label>Новости</label>
+    </button>
+    <button class="nav-btn" onclick="openSection('navigation', this)">
+        <span class="material-icons-round">explore</span>
+        <label>Навигация</label>
+    </button>
+    <button class="nav-btn" onclick="openSection('schedule', this)">
+        <span class="material-icons-round">today</span>
+        <label>Расписание</label>
+    </button>
+    <button class="nav-btn" onclick="openSection('canteen', this)">
+        <span class="material-icons-round">restaurant</span> 
+        <label>Столовая</label>
+    </button>
+    <button class="nav-btn" onclick="openSection('info', this)">
+        <span class="material-icons-round">assignment</span>
+        <label>Инфо</label>
+    </button>
+
+    <a href="admin.html" class="admin-gate">
+        <span class="material-icons-round">settings</span>
+    </a>
+</nav>
 
     <script src="logic.js"></script>
+    
 </body>
 </html>

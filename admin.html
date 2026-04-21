@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление стендом</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root { --bg-admin: #f1f5f9; }
+        body { background: var(--bg-admin); padding: 20px; font-family: 'Inter', sans-serif; }
+        .admin-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto; }
+        .admin-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto; }
+        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: 600; color: #64748b; border-radius: 8px; transition: 0.3s; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; margin-top: 5px; }
+        button[type="submit"] { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 700; margin-top: 10px; }
+        
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        .del-btn { color: #ef4444; cursor: pointer; background: none; border: none; }
+        .del-btn:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body>
+
+<script>
+    const pass = prompt("Пароль:");
+    if (pass !== "1234") { window.location.href = "index.html"; }
+</script>
+
+<div class="admin-card">
+    <h1 style="margin-bottom: 20px;">Панель управления</h1>
+    
+    <div class="admin-nav">
+        <button class="tab-btn" onclick="switchTab('info')">Инфо</button>
+<button class="tab-btn" onclick="switchTab('schedule')">Расписание</button>
+
+<div id="tab-info" class="tab-content" style="display:none">
+    <form id="infoForm">
+        <input type="hidden" name="type" value="info">
+        <input type="text" name="info_title" placeholder="Заголовок (например, 'Документы')" required>
+        <textarea name="info_text" placeholder="Основной текст" rows="3" required></textarea>
+        <button type="submit">Добавить карточку инфо</button>
+    </form>
+    <div id="list-info" class="data-list"></div>
+</div>
+
+<div id="tab-schedule" class="tab-content" style="display:none">
+    <form id="scheduleForm">
+        <input type="hidden" name="type" value="schedule">
+        <select name="day">
+            <option value="Понедельник">Понедельник</option>
+            <option value="Вторник">Вторник</option>
+            <option value="Среда">Среда</option>
+            <option value="Четверг">Четверг</option>
+            <option value="Пятница">Пятница</option>
+            <option value="Суббота">Суббота</option>
+        </select>
+        <div class="form-grid">
+            <input type="text" name="time" placeholder="Время (08:00 - 08:40)">
+            <input type="text" name="subject" placeholder="Предмет">
+            <input type="text" name="room" placeholder="Каб.">
+        </div>
+        <button type="submit">Добавить урок</button>
+    </form>
+    <div id="list-schedule" class="data-list"></div>
+</div>
+        <button class="tab-btn active" onclick="switchTab('news')">Новости</button>
+        <button class="tab-btn" onclick="switchTab('rooms')">Кабинеты</button>
+        <button class="tab-btn" onclick="switchTab('canteen')">Столовая</button>
+    </div>
+
+    <div id="tab-news" class="tab-content">
+        <form id="newsForm">
+            <input type="hidden" name="type" value="news">
+            <input type="text" name="title" placeholder="Заголовок новости" required>
+            <textarea name="text" placeholder="Текст новости" rows="3" required></textarea>
+            <input type="file" name="file" accept="image/*,video/*" required>
+            <button type="submit">Опубликовать новость</button>
+        </form>
+        <div id="list-news" class="data-list"></div>
+    </div>
+
+    <div id="tab-rooms" class="tab-content" style="display:none">
+        <form id="roomForm">
+            <input type="hidden" name="type" value="room">
+            <div class="form-grid">
+                <input type="text" name="room_id" placeholder="№ Кабинета" required>
+                <input type="text" name="room_name" placeholder="Предмет" required>
+                <input type="text" name="room_teacher" placeholder="Учитель" required>
+                <select name="room_floor">
+                    <option value="1 этаж">1 этаж</option>
+                    <option value="2 этаж">2 этаж</option>
+                    <option value="3 этаж">3 этаж</option>
+                </select>
+            </div>
+            <button type="submit">Добавить кабинет</button>
+        </form>
+        <div id="list-rooms" class="data-list"></div>
+    </div>
+
+    <div id="tab-canteen" class="tab-content" style="display:none">
+        <form id="canteenForm">
+            <input type="hidden" name="type" value="canteen">
+            <div class="form-grid">
+                <input type="text" name="item_name" placeholder="Название блюда" required>
+                <input type="text" name="item_price" placeholder="Цена (руб)" required>
+                <input type="text" name="item_desc" placeholder="Описание">
+                <input type="text" name="item_icon" placeholder="Эмодзи (например 🍲)">
+            </div>
+            <button type="submit">Добавить в меню</button>
+        </form>
+        <div id="list-canteen" class="data-list"></div>
+    </div>
+</div>
+<div class="admin-header-actions" style="max-width: 900px; margin: 0 auto 15px auto; display: flex; align-items: center;">
+    <a href="index.html" class="back-btn">
+        <span class="material-icons-round">arrow_back</span>
+        Вернуться на стенд
+    </a>
+</div>
+
+
+<style>
+    .back-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 14px;
+        transition: 0.3s;
+        padding: 8px 16px;
+        border-radius: 10px;
+        background: white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .back-btn:hover {
+        color: var(--primary);
+        transform: translateX(-5px);
+    }
+</style>
+<script>
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tab).style.display = 'block';
+        event.target.classList.add('active');
+        loadDataList(tab);
+    }
+
+    // Универсальная отправка форм
+    document.querySelectorAll('form').forEach(form => {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const res = await fetch('upload.php', { method: 'POST', body: formData });
+            const data = await res.json();
+            alert(data.message);
+            form.reset();
+            loadDataList(formData.get('type'));
+        };
+    });
+
+    // Функция удаления (через PHP)
+    async function deleteItem(type, index) {
+        if (!confirm('Удалить этот элемент?')) return;
+        const formData = new FormData();
+        formData.append('action', 'delete');
+        formData.append('type', type);
+        formData.append('index', index);
+        
+        const res = await fetch('upload.php', { method: 'POST', body: formData });
+        const data = await res.json();
+        loadDataList(type);
+    }
+
+    // Загрузка списков для удаления
+    async function loadDataList(type) {
+        const container = document.getElementById('list-' + (type === 'news' ? 'news' : type === 'room' ? 'rooms' : 'canteen'));
+        const files = { news: 'news.json', room: 'rooms.json', canteen: 'canteen.json' };
+        try {
+            const res = await fetch(files[type] + '?v=' + Date.now());
+            const data = await res.json();
+            container.innerHTML = '<h4>Текущие данные:</h4>';
+            data.forEach((item, index) => {
+                container.innerHTML += `
+                    <div class="list-item">
+                        <span>${item.title || item.name || item.room_id || item.id}</span>
+                        <button class="del-btn" onclick="deleteItem('${type}', ${index})">
+                            <span class="material-icons-round">delete</span>
+                        </button>
+                    </div>`;
+            });
+        } catch (e) { container.innerHTML = ''; }
+    }
+
+    // Загрузка при старте
+    window.onload = () => loadDataList('news');
+</script>
+
+
+</body>
+</html>
