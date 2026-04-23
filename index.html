@@ -23,8 +23,8 @@
             </div>
             
             <div class="datetime-block">
-                <div id="clock">20:42</div>
-                <div id="date">13 апреля, понедельник</div>
+                <div id="clock">00:00</div>
+                <div id="date">Загрузка...</div>
             </div>
         </header>
 
@@ -42,32 +42,41 @@
             </section>
 
             <section id="navigation" class="content-section">
-    <div class="section-wrapper">
-        <div class="section-title">
-            <span class="material-icons-round">explore</span>
-            <h2>Навигация и поиск кабинетов</h2>
-        </div>
-    
-        <div class="nav-container">
-            <div class="search-column">
-                <div class="search-wrapper">
-                    <span class="material-icons-round">search</span>
-                    <input type="text" id="roomSearch" placeholder="Введите номер кабинета или фамилию учителя..." oninput="filterRooms(this.value)">
-                </div>
-                
-                <div id="nav-content" class="rooms-grid">
+                <div class="section-wrapper">
+                    <div class="section-title">
+                        <span class="material-icons-round">explore</span>
+                        <h2>Навигация и поиск кабинетов</h2>
                     </div>
-            </div>
 
-            <div class="map-column">
-                <div class="map-placeholder">
-                    <span class="material-icons-round">map</span>
-                    <p>Интерактивный план этажа</p>
+                    <div class="floor-selector">
+                        <div class="floor-tabs">
+                            <button class="floor-btn active" onclick="loadFloor(1, this)">1 этаж</button>
+                            <button class="floor-btn" onclick="loadFloor(2, this)">2 этаж</button>
+                            <button class="floor-btn" onclick="loadFloor(3, this)">3 этаж</button>
+                        </div>
+                    </div>
+
+                    <div class="nav-container">
+                        <div class="search-column">
+                            <div class="search-wrapper">
+                                <span class="material-icons-round">search</span>
+                                <input type="text" id="roomSearch" placeholder="Номер кабинета или фамилия..." oninput="filterRooms(this.value)">
+                            </div>
+                            <div id="nav-content" class="rooms-grid">
+                                </div>
+                        </div>
+
+                        <div class="map-column">
+                            <div id="svg-map-container" class="map-display">
+                                <div class="map-placeholder">
+                                    <span class="material-icons-round">map</span>
+                                    <p>Интерактивный план этажа</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</section>
+            </section>
 
             <section id="schedule" class="content-section">
                 <div class="section-wrapper">
@@ -75,7 +84,8 @@
                         <span class="material-icons-round">event_note</span>
                         <h2>Расписание занятий</h2>
                     </div>
-                    <div id="schedule-container"></div>
+                    <div id="schedule-container">
+                        </div>
                 </div>
             </section>
 
@@ -85,7 +95,8 @@
                         <span class="material-icons-round">restaurant</span>
                         <h2>Меню столовой</h2>
                     </div>
-                    <div id="canteen-container"></div>
+                    <div id="canteen-container" class="canteen-grid">
+                        </div>
                 </div>
             </section>
 
@@ -93,42 +104,58 @@
                 <div class="section-wrapper">
                     <div class="section-title">
                         <span class="material-icons-round">info</span>
-                        <h2>Информация для поступающих</h2>
+                        <h2>Важная информация</h2>
                     </div>
-                    <div id="info-container"></div>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <h3>Прием в 1 класс</h3>
+                            <p><strong>Сроки:</strong> с 1 апреля по 30 июня.</p>
+                            <p><strong>Документы:</strong> Паспорт родителя, Свидетельство о рождении, Справка о регистрации.</p>
+                        </div>
+                        <div class="info-card">
+                            <h3>Профильное обучение (10 кл)</h3>
+                            <p>Направления: Технологический, Гуманитарный.</p>
+                            <p>Прием заявлений в кабинете №202 (2 этаж).</p>
+                        </div>
+                    </div>
                 </div>
             </section>
             
         </main>
-        
+
         <nav class="main-nav">
-    <button class="nav-btn active" onclick="openSection('news', this)">
-        <span class="material-icons-round">feed</span>
-        <label>Новости</label>
-    </button>
-    <button class="nav-btn" onclick="openSection('navigation', this)">
-        <span class="material-icons-round">explore</span>
-        <label>Навигация</label>
-    </button>
-    <button class="nav-btn" onclick="openSection('schedule', this)">
-        <span class="material-icons-round">today</span>
-        <label>Расписание</label>
-    </button>
-    <button class="nav-btn" onclick="openSection('canteen', this)">
-        <span class="material-icons-round">restaurant</span> 
-        <label>Столовая</label>
-    </button>
-    <button class="nav-btn" onclick="openSection('info', this)">
-        <span class="material-icons-round">assignment</span>
-        <label>Инфо</label>
-    </button>
+            <button class="nav-btn active" onclick="openSection('news', this)">
+                <span class="material-icons-round">feed</span>
+                <label>Новости</label>
+            </button>
+            <button class="nav-btn" onclick="openSection('navigation', this)">
+                <span class="material-icons-round">explore</span>
+                <label>Навигация</label>
+            </button>
+            <button class="nav-btn" onclick="openSection('schedule', this)">
+                <span class="material-icons-round">today</span>
+                <label>Расписание</label>
+            </button>
+            <button class="nav-btn" onclick="openSection('canteen', this)">
+                <span class="material-icons-round">restaurant</span> 
+                <label>Столовая</label>
+            </button>
+            <button class="nav-btn" onclick="openSection('info', this)">
+                <span class="material-icons-round">assignment</span>
+                <label>Инфо</label>
+            </button>
 
-    <a href="admin.html" class="admin-gate">
-        <span class="material-icons-round">settings</span>
-    </a>
-</nav>
-
-    <script src="logic.js"></script>
-    
+            <a href="admin.html" class="admin-gate">
+                <span class="material-icons-round">settings</span>
+            </a>
+        </nav>
+    </div> <script src="logic.js"></script>
+    <div id="news-modal" class="modal" onclick="closeNewsModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="close-modal" onclick="closeNewsModal()">&times;</span>
+        <div id="modal-body">
+            </div>
+    </div>
+</div>
 </body>
 </html>
