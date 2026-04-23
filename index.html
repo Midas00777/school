@@ -36,8 +36,7 @@
                         <span class="material-icons-round">campaign</span>
                         <h2>Последние новости</h2>
                     </div>
-                    <div class="news-grid" id="news-container">
-                        </div>
+                    <div class="news-grid" id="news-container"></div>
                 </div>
             </section>
 
@@ -62,10 +61,8 @@
                                 <span class="material-icons-round">search</span>
                                 <input type="text" id="roomSearch" placeholder="Номер кабинета или фамилия..." oninput="filterRooms(this.value)">
                             </div>
-                            <div id="nav-content" class="rooms-grid">
-                                </div>
+                            <div id="nav-content" class="rooms-grid"></div>
                         </div>
-
                         <div class="map-column">
                             <div id="svg-map-container" class="map-display">
                                 <div class="map-placeholder">
@@ -84,8 +81,7 @@
                         <span class="material-icons-round">event_note</span>
                         <h2>Расписание занятий</h2>
                     </div>
-                    <div id="schedule-container">
-                        </div>
+                    <div id="schedule-container"></div>
                 </div>
             </section>
 
@@ -95,8 +91,7 @@
                         <span class="material-icons-round">restaurant</span>
                         <h2>Меню столовой</h2>
                     </div>
-                    <div id="canteen-container" class="canteen-grid">
-                        </div>
+                    <div id="canteen-container" class="canteen-grid"></div>
                 </div>
             </section>
 
@@ -106,18 +101,8 @@
                         <span class="material-icons-round">info</span>
                         <h2>Важная информация</h2>
                     </div>
-                    <div class="info-grid">
-                        <div class="info-card">
-                            <h3>Прием в 1 класс</h3>
-                            <p><strong>Сроки:</strong> с 1 апреля по 30 июня.</p>
-                            <p><strong>Документы:</strong> Паспорт родителя, Свидетельство о рождении, Справка о регистрации.</p>
+                    <div id="info-container" class="info-grid">
                         </div>
-                        <div class="info-card">
-                            <h3>Профильное обучение (10 кл)</h3>
-                            <p>Направления: Технологический, Гуманитарный.</p>
-                            <p>Прием заявлений в кабинете №202 (2 этаж).</p>
-                        </div>
-                    </div>
                 </div>
             </section>
             
@@ -149,13 +134,15 @@
                 <span class="material-icons-round">settings</span>
             </a>
         </nav>
-    </div> <script src="logic.js"></script>
+    </div> 
+
     <div id="news-modal" class="modal" onclick="closeNewsModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <span class="close-modal" onclick="closeNewsModal()">&times;</span>
-        <div id="modal-body">
-            </div>
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="close-modal" onclick="closeNewsModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
     </div>
-</div>
+
+    <script src="logic.js"></script>
 </body>
 </html>

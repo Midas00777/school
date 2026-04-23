@@ -31,8 +31,10 @@ function openSection(sectionId, clickedButton) {
     }
 
     // Дополнительная загрузка данных при открытии секций
+    if (sectionId === 'news') loadNews();
     if (sectionId === 'canteen') loadCanteen();
     if (sectionId === 'schedule') loadSchedule();
+    if (sectionId === 'info') loadInfo();
 }
 
 function updateDateTime() {

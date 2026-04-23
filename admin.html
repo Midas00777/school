@@ -191,48 +191,96 @@
 });
 
     // Функция удаления (через PHP)
-    async function deleteItem(type, index) {
-        if (!confirm('Удалить этот элемент?')) return;
-        const formData = new FormData();
-        formData.append('action', 'delete');
-        formData.append('type', type);
-        formData.append('index', index);
-        
+  async function deleteItem(type, index) {
+    if (!confirm('Вы уверены, что хотите удалить эту запись?')) return;
+
+    const formData = new FormData();
+    formData.append('action', 'delete');
+    formData.append('type', type);
+    formData.append('index', index);
+
+    try {
         const res = await fetch('upload.php', { method: 'POST', body: formData });
-        const data = await res.json();
-        loadDataList(type);
+        const result = await res.json();
+        alert(result.message);
+        loadDataList(type); // Обновляем список в админке
+    } catch (e) {
+        console.error("Ошибка удаления:", e);
     }
+}
 
     // Загрузка списков для удаления
     async function loadDataList(type) {
-        const container = document.getElementById('list-' + (type === 'news' ? 'news' : type === 'room' ? 'rooms' : 'canteen'));
-        const files = { 
+    // Определяем правильный ID контейнера для каждого типа
+    const containerMap = {
+        'news': 'list-news',
+        'room': 'list-rooms',
+        'canteen': 'list-canteen',
+        'info': 'list-info',
+        'schedule': 'list-schedule'
+    };
+    
+    const container = document.getElementById(containerMap[type]);
+    const files = { 
         news: 'news.json', 
         room: 'rooms.json', 
         canteen: 'canteen.json', 
         info: 'info.json', 
         schedule: 'schedule.json' 
     };
-        try {
-            const res = await fetch(files[type] + '?v=' + Date.now());
-            const data = await res.json();
-            container.innerHTML = '<h4>Текущие данные:</h4>';
-            data.forEach((item, index) => {
-               container.innerHTML += `
-    <div class="list-item">
-        <span>${item.title || item.name}</span>
-        <div class="actions">
-            <button class="edit-btn" onclick="editItem('${type}', ${index})">
-                <span class="material-icons-round">edit</span>
-            </button>
-            <button class="del-btn" onclick="deleteItem('${type}', ${index})">
-                <span class="material-icons-round">delete</span>
-            </button>
-        </div>
-    </div>`;
-            });
-        } catch (e) { container.innerHTML = ''; }
+
+    if (!container) return;
+
+    try {
+        const res = await fetch(files[type] + '?v=' + Date.now());
+        const data = await res.json();
+        
+        container.innerHTML = '<h4>Текущие данные:</h4>';
+
+        // Если данных нет, выходим
+        if (!data || data.length === 0) {
+            container.innerHTML += '<p>Список пуст</p>';
+            return;
+        }
+
+        data.forEach((item, index) => {
+            // Для столовой логика отображения другая (так как там вложенные items)
+            if (type === 'canteen') {
+                container.innerHTML += `
+                    <div class="list-item-group" style="margin-bottom: 15px; border-bottom: 1px solid #eee;">
+                        <strong>📁 Категория: ${item.category}</strong>
+                        ${item.items.map((dish, dishIdx) => `
+                            <div class="list-item" style="padding-left: 20px; font-size: 0.9em;">
+                                <span>${dish.name} (${dish.price} ₽)</span>
+                                <div class="actions">
+                                    <button class="del-btn" onclick="deleteCanteenItem(${index}, ${dishIdx})">
+                                        <span class="material-icons-round">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>`;
+            } else {
+                // Обычный список для Инфо, Новостей и Кабинетов
+                container.innerHTML += `
+                    <div class="list-item">
+                        <span>${item.title || item.name || item.subject || ('Кабинет ' + item.id)}</span>
+                        <div class="actions">
+                            <button class="edit-btn" onclick="editItem('${type}', ${index})">
+                                <span class="material-icons-round">edit</span>
+                            </button>
+                            <button class="del-btn" onclick="deleteItem('${type}', ${index})">
+                                <span class="material-icons-round">delete</span>
+                            </button>
+                        </div>
+                    </div>`;
+            }
+        });
+    } catch (e) { 
+        console.error("Ошибка загрузки списка:", e);
+        container.innerHTML = '<p>Ошибка загрузки данных</p>'; 
     }
+}
 
     // Загрузка при старте
     window.onload = () => loadDataList('news');
