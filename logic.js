@@ -1,4 +1,3 @@
-// ==========================================
 // 1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
 // ==========================================
 let allRooms = [];
@@ -36,7 +35,7 @@ function openSection(sectionId, clickedButton) {
     if (sectionId === 'schedule') loadSchedule();
     if (sectionId === 'info') loadInfo();
 }
-
+// 2. ЧАСЫ
 function updateDateTime() {
     const clock = document.getElementById('clock');
     const dateEl = document.getElementById('date');
