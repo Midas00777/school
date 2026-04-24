@@ -1,42 +1,12 @@
-// ==========================================
-// 1. ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
-// ==========================================
-let allRooms = [];
-let currentFloor = 1;
+// 1. ИНИЦИАЛИЗАЦИЯ
+document.addEventListener('DOMContentLoaded', () => {
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    renderNavigation(); // Загрузка кабинетов
+    renderNews();       // Загрузка новостей
+});
 
-// ==========================================
-// 2. УПРАВЛЕНИЕ СЕКЦИЯМИ И ВРЕМЕНЕМ
-// ==========================================
-
-function openSection(sectionId, clickedButton) {
-    const sections = document.querySelectorAll('.content-section');
-    const buttons = document.querySelectorAll('.nav-btn');
-    const targetSection = document.getElementById(sectionId);
-    
-    if (!targetSection) return;
-
-    // Скрываем все секции и деактивируем кнопки меню
-    sections.forEach(s => s.classList.remove('active'));
-    buttons.forEach(b => b.classList.remove('active'));
-
-    // Показываем нужную
-    targetSection.classList.add('active');
-
-    // Подсвечиваем кнопку в нижнем меню
-    if (clickedButton) {
-        clickedButton.classList.add('active');
-    } else {
-        const btn = document.querySelector(`.nav-btn[onclick*="${sectionId}"]`);
-        if (btn) btn.classList.add('active');
-    }
-
-    // Дополнительная загрузка данных при открытии секций
-    if (sectionId === 'news') loadNews();
-    if (sectionId === 'canteen') loadCanteen();
-    if (sectionId === 'schedule') loadSchedule();
-    if (sectionId === 'info') loadInfo();
-}
-
+// 2. ЧАСЫ
 function updateDateTime() {
     const clock = document.getElementById('clock');
     const dateEl = document.getElementById('date');
