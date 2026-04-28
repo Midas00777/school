@@ -190,9 +190,11 @@ body {
 
 /* Стили для поиска кабинетов */
 .nav-container {
-    display: grid;
-    grid-template-columns: 1fr 450px; 
-    gap: 30px;
+    display: flex;
+    flex-direction: column; /* Элементы строго друг под другом */
+    gap: 0; 
+    height: calc(100vh - 200px); /* Высота на весь экран минус шапка */
+    overflow: hidden;
 }
 
 .search-wrapper {
@@ -445,15 +447,28 @@ body {
     align-items: center;
 }
 
+/* Найди этот блок в style.css и замени его содержимое */
 .modal-content {
-    background-color: var(--white);
+    background-color: #fff;
+    margin: 5% auto;
     padding: 30px;
-    border-radius: var(--radius);
-    max-width: 80%;
-    max-height: 85%;
-    overflow-y: auto;
+    border-radius: 20px;
+    width: 80%;
+    max-width: 800px;
+    max-height: 80vh; /* Ограничиваем высоту окна до 80% экрана */
+    overflow-y: auto; /* Включаем вертикальную прокрутку, если текста много */
     position: relative;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    /* Исправление горизонтального скролла: */
+    word-wrap: break-word; 
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+
+/* Также добавь или проверь этот блок, чтобы сам текст не вытягивался вширь */
+#modal-body {
+    display: block;
+    width: 100%;
 }
 
 .close-modal {
@@ -544,4 +559,534 @@ body {
 .nutrients strong {
     color: var(--primary);
     margin-left: auto;
+}
+/* Основной контейнер для карты и списка */
+.map-section {
+    display: flex;
+    flex-direction: row; /* В ряд на широких экранах */
+    gap: 20px;
+    position: relative;
+    align-items: flex-start;
+}
+
+/* Настройки для списка кабинетов */
+.rooms-list {
+    flex: 0 0 300px; /* Фиксированная ширина списка */
+    max-height: 600px;
+    overflow-y: auto;
+    z-index: 10; /* Чтобы список был выше, если они пересекутся */
+    background: var(--bg-card);
+    border-radius: 15px;
+    padding: 15px;
+}
+
+/* Настройки для карты */
+.map-container {
+    flex-grow: 1;
+    position: relative;
+    z-index: 1; /* Карта всегда под элементами управления */
+    width: 100%;
+    min-height: 400px;
+}
+
+/* АДАПТИВНОСТЬ: Когда экран меньше 1000px */
+@media (max-width: 1000px) {
+    .map-section {
+        flex-direction: column; /* Ставим их друг под друга */
+    }
+    
+    .rooms-list {
+        width: 100%; /* Список на всю ширину */
+        max-height: 300px; /* Ограничиваем высоту, чтобы не листать вечность до карты */
+        order: 2; /* Карта будет сверху, список под ней (или наоборот) */
+    }
+    
+    .map-container {
+        order: 1;
+        height: 350px;
+    }
+
+    .search-box {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+/* Стиль для плашки с номером кабинета */
+.room-item-number {
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    display: inline-block;
+    margin-right: 10px;
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+    min-width: 45px;
+    text-align: center;
+}
+
+/* Эффект при наведении на строку кабинета */
+.room-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    transition: 0.2s;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 5px;
+}
+
+.room-item:hover {
+    background: rgba(37, 99, 235, 0.05);
+    transform: translateX(5px);
+}
+/* Контейнер списка */
+#rooms-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+}
+
+/* Карточка кабинета */
+.room-item {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: 0.3s;
+    border: 1px solid #eef2f6;
+}
+
+.room-item:hover {
+    transform: translateX(5px);
+    border-color: #2563eb;
+}
+
+/* ТО САМОЕ: Стилизация номера кабинета */
+.room-item-number {
+    background: #2563eb; /* Синий цвет */
+    color: white;
+    font-weight: 800;
+    min-width: 50px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    margin-right: 15px;
+    font-size: 14px;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+.room-name {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 15px;
+}
+
+.room-teacher {
+    font-size: 13px;
+    color: #64748b;
+}
+/* Контейнер навигации */
+.nav-container {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    align-items: flex-start;
+}
+
+/* Колонка со списком */
+/* Список кабинетов под длинной картой */
+.search-column {
+    flex: 1 !important;
+    display: flex;
+    flex-direction: column;
+    min-height: 200px; /* Минимальное место для поиска и пары строк */
+}
+
+#nav-content {
+    flex-grow: 1;
+    overflow-y: auto !important; /* Скроллим только список */
+    max-height: 25vh !important; /* Оставшиеся 25% высоты отдаем списку */
+    background: rgba(255,255,255,0.5);
+    border-radius: 10px;
+}
+
+/* Колонка с картой */
+/* Специально для вертикальной карты на вертикальном стенде */
+.map-column {
+    flex: 0 0 65vh !important; /* Увеличиваем высоту карты до 65% экрана */
+    height: 65vh !important;
+    max-height: none !important; /* Снимаем ограничения, если они были */
+    width: 100% !important;
+    background: #ffffff;
+    display: flex !important;
+    align-items: flex-start !important; /* Прижимаем к верху, если карта длинная */
+    justify-content: center;
+    overflow: hidden;
+    border-radius: var(--radius);
+    margin-bottom: 15px;
+}
+
+/* Заставляем карту тянуться по высоте, а не по ширине */
+#svg-map-container svg, 
+.map-display img {
+    width: auto !important; /* Отключаем растягивание по ширине */
+    height: 100% !important; /* Растягиваем строго по высоте блока */
+    max-width: 100%; /* Но не даем вылезать за бока */
+    object-fit: contain;
+}
+
+/* СТИЛИЗАЦИЯ НОМЕРОВ КАБИНЕТОВ */
+.room-item {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 12px 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border: 1px solid #f1f5f9;
+    transition: 0.3s;
+}
+
+.room-item:hover {
+    transform: translateX(5px);
+    border-color: #2563eb;
+}
+
+.room-item-number {
+    background: #2563eb; /* Основной синий цвет */
+    color: white;
+    font-weight: 700;
+    min-width: 45px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    margin-right: 15px;
+    font-size: 14px;
+}
+
+.room-name {
+    font-weight: 600;
+    color: #1e293b;
+    display: block;
+}
+
+.room-teacher {
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* АДАПТИВНОСТЬ ДЛЯ СЖАТОГО ЭКРАНА */
+@media (max-width: 1024px) {
+    /* Контейнер навигации */
+.nav-container {
+    display: flex;
+    flex-direction: column !important;
+    height: auto !important; /* Позволяем контенту растягивать контейнер */
+    gap: 20px !important;
+}
+
+/* 1. Блок поиска и списка (ТЕПЕРЬ СВЕРХУ) */
+.search-column {
+    order: 1; /* Первый по счету */
+    width: 100% !important;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ограничиваем список кабинетов, чтобы он не был бесконечным */
+#nav-content {
+    max-height: 400px; /* Высота списка до начала скролла */
+    overflow-y: auto !important;
+    background: #fff;
+    border-radius: 15px;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+/* 2. Блок карты (ТЕПЕРЬ СНИЗУ) */
+.map-column {
+    order: 2; /* Второй по счету */
+    width: 100% !important;
+    height: 600px !important; /* ЖЕСТКАЯ ВЫСОТА, чтобы карта не исчезала */
+    background: #ffffff;
+    border-radius: var(--radius);
+    padding: 15px;
+    box-shadow: var(--shadow);
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Оживляем отображение карты */
+#svg-map-container, .map-display {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important; /* Чтобы не схлопывалось */
+}
+
+#svg-map-container svg, .map-display img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important; /* Карта впишется в 600px высоты */
+}
+    
+    .search-column {
+        width: 100%;
+        order: 2; /* Список уходит вниз */
+    }
+    
+    .map-column {
+        width: 100%;
+        order: 1; /* Карта остается сверху */
+        min-height: 300px;
+    }
+    
+    .rooms-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* На планшетах список в две колонки */
+        gap: 10px;
+    }
+}
+
+@media (max-width: 600px) {
+    .rooms-grid {
+        grid-template-columns: 1fr; /* На телефонах в одну */
+    }
+}
+/* Сетка для блока Инфо */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    padding: 10px 0;
+}
+
+/* Карточка инфо */
+.info-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 30px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    transition: var(--transition);
+    border: 1px solid #edf2f7;
+    position: relative;
+    overflow: hidden;
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+}
+
+/* Декоративная полоска сверху каждой карточки */
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: var(--primary);
+}
+.info-card-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.info-card-icon {
+    width: 50px;
+    height: 50px;
+    background: #eff6ff;
+    color: var(--primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.info-card-icon .material-icons-round {
+    font-size: 28px;
+}
+
+.info-card h3 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.info-card-content {
+    color: var(--text-muted);
+    font-size: 17px;
+    line-height: 1.6;
+}
+
+/* Стили для ссылок или контактов внутри инфо */
+.info-contact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    font-weight: 600;
+    color: var(--primary);
+}
+/* Ограничение текста в карточке инфо */
+.info-card-content p {
+    display: -webkit-box;
+    -webkit-line-clamp: 4; /* Показываем только 4 строки */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+/* Кнопка раскрытия */
+.info-more-btn {
+    align-self: flex-start;
+    background: #eff6ff;
+    color: var(--primary);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: auto; /* Прижимает кнопку к низу карточки */
+}
+
+.info-more-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.info-more-btn .material-icons-round {
+    font-size: 18px;
+}
+/* Карточка инфо */
+/* Сама карточка */
+.info-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 30px;
+    border: 1px solid #eef2f6;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: all 0.3s ease;
+    min-height: 320px;
+}
+
+/* Эффект при наведении */
+.info-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+    border-color: var(--primary);
+}
+
+/* Красивый выделенный заголовок */
+/* Заголовок: центрируем и разрешаем любой объем текста */
+.info-card h3 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #1a202c;
+    margin-bottom: 20px;
+    line-height: 1.4;
+    
+    /* Центрирование */
+    display: block; /* Убираем flex, чтобы текст шел стандартным блоком */
+    text-align: center; 
+    
+    /* Убираем любые ограничения */
+    height: auto !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 15px;
+}
+
+/* Если иконка внутри h3, оформляем её отдельно */
+.info-card h3 .material-icons-round {
+    display: block; /* Иконка над текстом для лучшего вида в центре */
+    margin: 0 auto 10px auto;
+    color: var(--primary);
+    font-size: 32px;
+}
+
+/* Контент: красная строка и многоточие */
+.info-card-content p {
+    font-size: 18px;
+    color: #4a5568;
+    line-height: 1.7;
+    
+    /* Красная строка */
+    text-indent: 30px; 
+    text-align: justify; /* Растягиваем текст по ширине для красоты */
+    
+    /* Многоточие после 4 строк */
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;  
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    margin-bottom: 70px; /* Увеличили отступ, чтобы текст не наползал на кнопку */
+}
+
+/* Кнопка "Подробнее", зафиксированная в углу */
+.info-more-btn {
+    position: absolute;
+    bottom: 25px;
+    right: 25px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+    transition: 0.2s;
+}
+
+.info-more-btn:hover {
+    filter: brightness(1.1);
+    transform: scale(1.05);
+}
+.info-card h3 {
+    word-wrap: break-word; /* Разрывать длинные слова, если они не лезут */
+    overflow-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.4 !important;
+    margin-bottom: 15px;
+    padding: 0 10px; /* Чтобы текст не лип к краям карточки */
+}
+
+/* Красная строка для текста */
+.info-card-content p {
+    text-indent: 30px;
+    text-align: justify;
+    /* Оставляем многоточие ТОЛЬКО для основного текста, не для заголовка */
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }

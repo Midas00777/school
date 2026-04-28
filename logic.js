@@ -77,31 +77,34 @@ async function loadFloor(floorNum, btn) {
 // ==========================================
 // 4. ЗАГРУЗКА ДАННЫХ (НОВОСТИ, СТОЛОВАЯ, РАСПИСАНИЕ)
 // ==========================================
-
 async function loadNews() {
     const container = document.getElementById('news-container');
     if (!container) return;
     try {
+        // Добавляем v=Date.now() чтобы браузер не кешировал старые новости
         const response = await fetch('news.json?v=' + Date.now());
         const news = await response.json();
         
         container.innerHTML = news.map((item, index) => `
             <div class="news-card" onclick="openNewsModal(${index})">
-                ${item.type === 'video' 
-                    ? `<video src="${item.file}" class="news-img"></video>`
-                    : `<div class="news-img" style="background-image: url('${item.file}')"></div>`}
+                <div class="news-media-container" style="width: 100%; height: 200px; overflow: hidden; border-radius: 12px 12px 0 0; background: #eee;">
+                    ${item.type === 'video' 
+                        ? `<video src="${item.file}" class="news-img" style="width: 100%; height: 100%; object-fit: cover;"></video>`
+                        : `<img src="${item.file}" class="news-img" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://placehold.co/600x400?text=Нет+фото'">`}
+                </div>
                 <div class="news-content">
                     <span class="news-date">${item.date}</span>
                     <h3>${item.title}</h3>
-                    <p>${item.text.substring(0, 100)}...</p> 
+                    <p>${item.text.substring(0, 100)}${item.text.length > 100 ? '...' : ''}</p> 
                 </div>
             </div>
         `).join('');
 
-        // Сохраним новости глобально, чтобы модалка могла их взять
+        // Сохраняем новости в глобальную переменную для модального окна
         window.currentNews = news; 
     } catch (e) {
-        container.innerHTML = '<p>Новости загружаются...</p>';
+        console.error("Ошибка загрузки новостей:", e);
+        container.innerHTML = '<p>Ошибка при загрузке новостей. Проверьте news.json</p>';
     }
 }
 
@@ -238,18 +241,16 @@ async function loadRooms() {
 }
 
 // Отрисовка карточек кабинетов в колонке поиска
+// Пример функции отрисовки (подправь под свою)
 function renderRooms(rooms) {
-    const container = document.getElementById('nav-content');
+    // В твоем HTML этот блок называется 'nav-content'
+    const container = document.getElementById('nav-content'); 
+    
     if (!container) return;
 
-    if (rooms.length === 0) {
-        container.innerHTML = '<p class="empty-msg">Кабинеты не найдены</p>';
-        return;
-    }
-
     container.innerHTML = rooms.map(room => `
-        <div class="room-item" onclick="highlightRoom('${room.id}')">
-            <div class="room-number">${room.id}</div>
+        <div class="room-item">
+            <span class="room-item-number">${room.id}</span>
             <div class="room-info">
                 <div class="room-name">${room.name}</div>
                 <div class="room-teacher">${room.teacher}</div>
@@ -346,18 +347,100 @@ async function loadInfo() {
     if (!container) return;
 
     try {
-        // Загружаем данные из файла, который создает админка
         const response = await fetch('info.json?v=' + Date.now());
         const data = await response.json();
 
-        // Очищаем контейнер и рисуем новые карточки
-        container.innerHTML = data.map(item => `
-            <div class="info-card">
-                <h3>${item.title}</h3>
-                <p>${item.text.replace(/\n/g, '<br>')}</p>
-            </div>
-        `).join('');
+        // Вместо старого мапа вызываем новую правильную функцию отрисовки
+        renderInfoBlocks(data);
+        
     } catch (e) {
+        console.error("Ошибка загрузки инфо:", e);
         container.innerHTML = '<p>Информация обновляется...</p>';
+    }
+}
+// Функция для отрисовки блоков (вызывай её при загрузке данных инфо)
+// 1. Функция отрисовки (вызывается после получения данных из админки)
+function renderInfoBlocks(infoData) {
+    const container = document.getElementById('info-container');
+    if (!container) return;
+
+    container.innerHTML = infoData.map(item => `
+        <div class="info-card">
+            <h3 style="
+                white-space: normal !important; 
+                overflow: visible !important; 
+                text-overflow: clip !important; 
+                display: block !important; 
+                height: auto !important; 
+                min-height: min-content !important;
+                text-align: center;
+            ">
+                <span class="material-icons-round" style="display: block; margin-bottom: 8px;">info</span> 
+                ${item.title}
+            </h3>
+            <div class="info-card-content">
+                <p>${item.text}</p>
+            </div>
+            <button class="info-more-btn" 
+                    data-title="${item.title.replace(/"/g, '&quot;')}" 
+                    data-text="${item.text.replace(/"/g, '&quot;')}">
+                Подробнее
+            </button>
+        </div>
+    `).join('');
+}
+
+// 2. Глобальный обработчик клика (добавь это ОДИН РАЗ в начало или конец logic.js)
+document.addEventListener('click', function(event) {
+    // Ищем кнопку, даже если кликнули по иконке внутри неё
+    const btn = event.target.closest('.info-more-btn');
+    
+    if (btn) {
+        const title = btn.getAttribute('data-title');
+        const text = btn.getAttribute('data-text');
+        showFullInfoModal(title, text);
+    }
+});
+
+// 3. Функция показа модалки
+function showFullInfoModal(title, text) {
+    const modal = document.getElementById('news-modal'); // Используем твою существующую модалку
+    const modalBody = document.getElementById('modal-body');
+
+    if (modal && modalBody) {
+        modalBody.innerHTML = `
+            <h2 style="color: var(--primary); margin-bottom: 15px;">${title}</h2>
+            <div style="font-size: 18px; line-height: 1.6; white-space: pre-wrap;">${text}</div>
+        `;
+        modal.style.display = 'flex';
+    } else {
+        console.error("Ошибка: Модальное окно или его тело не найдены!");
+    }
+}
+
+// Функция открытия модалки (используем твой news-modal)
+function openFullInfo(title, text) {
+    const modal = document.getElementById('news-modal');
+    const modalBody = document.getElementById('modal-body');
+    
+    if (!modal || !modalBody) {
+        console.error("Модальное окно не найдено в HTML!");
+        return;
+    }
+
+    modalBody.innerHTML = `
+        <h2 style="margin-bottom: 20px; color: var(--primary); font-size: 28px;">${title}</h2>
+        <div style="font-size: 18px; line-height: 1.6; color: var(--text-main); white-space: pre-wrap;">
+            ${text}
+        </div>
+    `;
+    
+    // Показываем окно
+    modal.style.display = 'flex';
+}
+function closeNewsModal() {
+    const modal = document.getElementById('news-modal');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }

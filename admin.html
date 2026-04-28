@@ -7,20 +7,23 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        :root { --bg-admin: #f1f5f9; }
+        :root { --bg-admin: #f1f5f9; --primary: #2563eb; }
         body { background: var(--bg-admin); padding: 20px; font-family: 'Inter', sans-serif; }
         .admin-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); max-width: 900px; margin: 0 auto; }
         .admin-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto; }
-        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: 600; color: #64748b; border-radius: 8px; transition: 0.3s; }
+        .tab-btn { padding: 10px 20px; border: none; background: none; cursor: pointer; font-weight: 600; color: #64748b; border-radius: 8px; transition: 0.3s; white-space: nowrap; }
         .tab-btn.active { background: var(--primary); color: white; }
         
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; margin-top: 5px; }
-        button[type="submit"] { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 700; margin-top: 10px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; margin-top: 5px; box-sizing: border-box; }
+        button[type="submit"] { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 700; margin-top: 10px; transition: 0.3s; }
+        button[type="submit"]:disabled { background: #cbd5e1; cursor: not-allowed; }
         
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #f1f5f9; background: white; }
+        .actions { display: flex; gap: 10px; }
         .del-btn { color: #ef4444; cursor: pointer; background: none; border: none; }
-        .del-btn:hover { transform: scale(1.1); }
+        .edit-btn { color: var(--primary); cursor: pointer; background: none; border: none; }
+        .back-btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: #64748b; font-weight: 600; padding: 10px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -30,46 +33,17 @@
     if (pass !== "1234") { window.location.href = "index.html"; }
 </script>
 
+<div style="max-width: 900px; margin: 0 auto;">
+    <a href="index.html" class="back-btn"><span class="material-icons-round">arrow_back</span> Вернуться на стенд</a>
+</div>
+
 <div class="admin-card">
     <h1 style="margin-bottom: 20px;">Панель управления</h1>
     
     <div class="admin-nav">
-        <button class="tab-btn" onclick="switchTab('info')">Инфо</button>
-<button class="tab-btn" onclick="switchTab('schedule')">Расписание</button>
-
-<div id="tab-info" class="tab-content" style="display:none">
-    <form id="infoForm">
-        <input type="hidden" name="type" value="info">
-        <input type="hidden" name="edit_index" id="info_edit_index" value="-1">
-        
-        <input type="text" name="info_title" id="info_field_title" placeholder="Заголовок" required>
-        <textarea name="info_text" id="info_field_text" placeholder="Основной текст" rows="3" required></textarea>
-        <button type="submit" id="info_submit_btn">Добавить карточку инфо</button>
-    </form>
-    <div id="list-info" class="data-list"></div>
-</div>
-
-<div id="tab-schedule" class="tab-content" style="display:none">
-    <form id="scheduleForm">
-        <input type="hidden" name="type" value="schedule">
-        <select name="day">
-            <option value="Понедельник">Понедельник</option>
-            <option value="Вторник">Вторник</option>
-            <option value="Среда">Среда</option>
-            <option value="Четверг">Четверг</option>
-            <option value="Пятница">Пятница</option>
-            <option value="Суббота">Суббота</option>
-        </select>
-        <div class="form-grid">
-            <input type="text" name="time" placeholder="Время (08:00 - 08:40)">
-            <input type="text" name="subject" placeholder="Предмет">
-            <input type="text" name="room" placeholder="Каб.">
-        </div>
-        <button type="submit">Добавить урок</button>
-    </form>
-    <div id="list-schedule" class="data-list"></div>
-</div>
         <button class="tab-btn active" onclick="switchTab('news')">Новости</button>
+        <button class="tab-btn" onclick="switchTab('info')">Инфо</button>
+        <button class="tab-btn" onclick="switchTab('schedule')">Расписание</button>
         <button class="tab-btn" onclick="switchTab('rooms')">Кабинеты</button>
         <button class="tab-btn" onclick="switchTab('canteen')">Столовая</button>
     </div>
@@ -77,12 +51,46 @@
     <div id="tab-news" class="tab-content">
         <form id="newsForm">
             <input type="hidden" name="type" value="news">
+            <input type="hidden" name="edit_index" value="-1">
             <input type="text" name="title" placeholder="Заголовок новости" required>
             <textarea name="text" placeholder="Текст новости" rows="3" required></textarea>
-            <input type="file" name="file" accept="image/*,video/*" required>
+            <input type="file" name="file" accept="image/*,video/*">
             <button type="submit">Опубликовать новость</button>
         </form>
-        <div id="list-news" class="data-list"></div>
+        <div id="list-news"></div>
+    </div>
+
+    <div id="tab-info" class="tab-content" style="display:none">
+        <form id="infoForm">
+            <input type="hidden" name="type" value="info">
+            <input type="hidden" name="edit_index" id="info_edit_index" value="-1">
+            <input type="text" name="info_title" id="info_field_title" placeholder="Заголовок" required>
+            <textarea name="info_text" id="info_field_text" placeholder="Основной текст" rows="3" required></textarea>
+            <input type="file" name="file" accept="image/*">
+            <button type="submit" id="info_submit_btn">Добавить карточку инфо</button>
+        </form>
+        <div id="list-info"></div>
+    </div>
+
+    <div id="tab-schedule" class="tab-content" style="display:none">
+        <form id="scheduleForm">
+            <input type="hidden" name="type" value="schedule">
+            <select name="day">
+                <option value="Понедельник">Понедельник</option>
+                <option value="Вторник">Вторник</option>
+                <option value="Среда">Среда</option>
+                <option value="Четверг">Четверг</option>
+                <option value="Пятница">Пятница</option>
+                <option value="Суббота">Суббота</option>
+            </select>
+            <div class="form-grid">
+                <input type="text" name="time" placeholder="Время (08:00 - 08:40)">
+                <input type="text" name="subject" placeholder="Предмет">
+                <input type="text" name="room" placeholder="Каб.">
+            </div>
+            <button type="submit">Добавить урок</button>
+        </form>
+        <div id="list-schedule"></div>
     </div>
 
     <div id="tab-rooms" class="tab-content" style="display:none">
@@ -100,250 +108,185 @@
             </div>
             <button type="submit">Добавить кабинет</button>
         </form>
-        <div id="list-rooms" class="data-list"></div>
+        <div id="list-rooms"></div>
     </div>
 
-   <div id="tab-canteen" class="tab-content" style="display:none">
-    <form id="canteenForm">
-        <input type="hidden" name="type" value="canteen">
-        <div class="form-grid">
-            <select name="category" required>
-             <option value="Завтрак">Завтрак</option>
-             <option value="Обед">Обед</option>
-             <option value="Полдник">Полдник</option>
-</select>
-            <input type="text" name="name" placeholder="Название блюда" required>
-            <input type="text" name="weight" placeholder="Выход (г/мл)">
-            <input type="text" name="price" placeholder="Цена (руб)" required>
-            <input type="number" step="0.1" name="kcal" placeholder="Ккал">
-            <input type="number" step="0.1" name="prot" placeholder="Белки">
-            <input type="number" step="0.1" name="fat" placeholder="Жиры">
-            <input type="number" step="0.1" name="carb" placeholder="Углеводы">
-        </div>
-        <button type="submit">Добавить блюдо с КБЖУ</button>
-    </form>
-    <div id="list-canteen" class="data-list"></div>
-</div>
-</div>
-</div>
-<div class="admin-header-actions" style="max-width: 900px; margin: 0 auto 15px auto; display: flex; align-items: center;">
-    <a href="index.html" class="back-btn">
-        <span class="material-icons-round">arrow_back</span>
-        Вернуться на стенд
-    </a>
+    <div id="tab-canteen" class="tab-content" style="display:none">
+        <form id="canteenForm">
+            <input type="hidden" name="type" value="canteen">
+            <div class="form-grid">
+                <select name="category" required>
+                    <option value="Завтрак">Завтрак</option>
+                    <option value="Обед">Обед</option>
+                    <option value="Полдник">Полдник</option>
+                </select>
+                <input type="text" name="name" placeholder="Название блюда" required>
+                <input type="text" name="weight" placeholder="Выход (г/мл)">
+                <input type="text" name="price" placeholder="Цена (руб)" required>
+                <input type="number" step="0.1" name="kcal" placeholder="Ккал">
+                <input type="number" step="0.1" name="prot" placeholder="Белки">
+                <input type="number" step="0.1" name="fat" placeholder="Жиры">
+                <input type="number" step="0.1" name="carb" placeholder="Углеводы">
+            </div>
+            <button type="submit">Добавить блюдо</button>
+        </form>
+        <div id="list-canteen"></div>
+    </div>
 </div>
 
-
-<style>
-    .back-btn {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        text-decoration: none;
-        color: #64748b;
-        font-weight: 600;
-        font-size: 14px;
-        transition: 0.3s;
-        padding: 8px 16px;
-        border-radius: 10px;
-        background: white;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    .back-btn:hover {
-        color: var(--primary);
-        transform: translateX(-5px);
-    }
-</style>
 <script>
+    // --- ПЕРЕКЛЮЧЕНИЕ ТАБОВ ---
     function switchTab(tab) {
         document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-' + tab).style.display = 'block';
-        event.target.classList.add('active');
+        event.currentTarget.classList.add('active');
         loadDataList(tab);
     }
 
-    // Универсальная отправка форм
-   document.querySelectorAll('form').forEach(form => {
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        
-        try {
-            const res = await fetch('upload.php', { 
-                method: 'POST', 
-                body: formData 
-            });
-            const text = await res.text(); // Сначала смотрим сырой ответ от сервера
-            console.log("Ответ сервера:", text);
+    // --- УНИВЕРСАЛЬНАЯ ОТПРАВКА (ОДИН ОБРАБОТЧИК) ---
+    document.querySelectorAll('form').forEach(form => {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
             
-            const data = JSON.parse(text);
-            alert(data.message);
-            form.reset();
+            const btn = form.querySelector('button[type="submit"]');
+            if (btn.disabled) return;
+            btn.disabled = true;
+
+            const formData = new FormData(form);
             
-            // Важно: вызываем обновление списка
-            loadDataList(formData.get('type')); 
-        } catch (error) {
-            console.error("Ошибка отправки:", error);
-            alert("Ошибка при сохранении. Проверь консоль браузера.");
-        }
-    };
-});
+            try {
+                const res = await fetch('upload.php', { method: 'POST', body: formData });
+                const text = await res.text();
+                
+                // Обработка возможного склеенного JSON (если PHP глючит)
+                let cleanText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+                const data = JSON.parse(cleanText);
+                
+                alert(data.message);
+                
+                if (data.status === 'success') {
+                    form.reset();
+                    // Сброс индекса редактирования
+                    const editIdx = form.querySelector('[name="edit_index"]');
+                    if (editIdx) editIdx.value = "-1";
+                    
+                    const infoBtn = document.getElementById('info_submit_btn');
+                    if (infoBtn) infoBtn.innerText = "Добавить карточку инфо";
 
-    // Функция удаления (через PHP)
-  async function deleteItem(type, index) {
-    if (!confirm('Вы уверены, что хотите удалить эту запись?')) return;
+                    loadDataList(formData.get('type'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Ошибка сервера. Проверь консоль.");
+            } finally {
+                btn.disabled = false;
+            }
+        };
+    });
 
-    const formData = new FormData();
-    formData.append('action', 'delete');
-    formData.append('type', type);
-    formData.append('index', index);
-
-    try {
-        const res = await fetch('upload.php', { method: 'POST', body: formData });
-        const result = await res.json();
-        alert(result.message);
-        loadDataList(type); // Обновляем список в админке
-    } catch (e) {
-        console.error("Ошибка удаления:", e);
-    }
-}
-
-    // Загрузка списков для удаления
+    // --- ЗАГРУЗКА СПИСКОВ ---
     async function loadDataList(type) {
-    // Определяем правильный ID контейнера для каждого типа
-    const containerMap = {
-        'news': 'list-news',
-        'room': 'list-rooms',
-        'canteen': 'list-canteen',
-        'info': 'list-info',
-        'schedule': 'list-schedule'
-    };
-    
-    const container = document.getElementById(containerMap[type]);
-    const files = { 
-        news: 'news.json', 
-        room: 'rooms.json', 
-        canteen: 'canteen.json', 
-        info: 'info.json', 
-        schedule: 'schedule.json' 
-    };
+        const containerMap = {
+            'news': 'list-news', 'room': 'list-rooms', 'canteen': 'list-canteen',
+            'info': 'list-info', 'schedule': 'list-schedule'
+        };
+        const files = { 
+            news: 'news.json', room: 'rooms.json', canteen: 'canteen.json', 
+            info: 'info.json', schedule: 'schedule.json' 
+        };
 
-    if (!container) return;
+        const container = document.getElementById(containerMap[type]);
+        if (!container) return;
 
-    try {
+        try {
+            const res = await fetch(files[type] + '?v=' + Date.now());
+            const data = await res.json();
+            container.innerHTML = '<h4 style="margin: 20px 0 10px;">Текущие данные:</h4>';
+
+            if (!data || data.length === 0) {
+                container.innerHTML += '<p>Список пуст</p>';
+                return;
+            }
+
+            data.forEach((item, index) => {
+                if (type === 'canteen') {
+                    container.innerHTML += `
+                        <div style="border: 1px solid #eee; padding: 10px; margin-bottom: 5px; border-radius: 8px;">
+                            <strong>${item.category}</strong>
+                            ${item.items.map((dish, dIdx) => `
+                                <div class="list-item">
+                                    <span>${dish.name}</span>
+                                    <button class="del-btn" onclick="deleteCanteenItem(${index}, ${dIdx})"><span class="material-icons-round">delete</span></button>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                } else {
+                    const title = item.title || item.info_title || item.name || item.subject || (item.id ? 'Каб. ' + item.id : 'Запись ' + index);
+                    container.innerHTML += `
+                        <div class="list-item">
+                            <span>${title}</span>
+                            <div class="actions">
+                                <button class="edit-btn" onclick="editItem('${type}', ${index})"><span class="material-icons-round">edit</span></button>
+                                <button class="del-btn" onclick="deleteItem('${type}', ${index})"><span class="material-icons-round">delete</span></button>
+                            </div>
+                        </div>`;
+                }
+            });
+        } catch (e) {
+            container.innerHTML = '<p>Данных нет</p>';
+        }
+    }
+
+    // --- УДАЛЕНИЕ ---
+    async function deleteItem(type, index) {
+        if (!confirm('Удалить?')) return;
+        const fd = new FormData();
+        fd.append('action', 'delete');
+        fd.append('type', type);
+        fd.append('index', index);
+        const res = await fetch('upload.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        alert(data.message);
+        loadDataList(type);
+    }
+
+    async function deleteCanteenItem(catIndex, itemIndex) {
+        if (!confirm('Удалить блюдо?')) return;
+        const fd = new FormData();
+        fd.append('action', 'delete_canteen');
+        fd.append('catIndex', catIndex);
+        fd.append('itemIndex', itemIndex);
+        const res = await fetch('upload.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        alert(data.message);
+        loadDataList('canteen');
+    }
+
+    // --- РЕДАКТИРОВАНИЕ ---
+    async function editItem(type, index) {
+        const files = { news: 'news.json', info: 'info.json', room: 'rooms.json' };
         const res = await fetch(files[type] + '?v=' + Date.now());
         const data = await res.json();
-        
-        container.innerHTML = '<h4>Текущие данные:</h4>';
+        const item = data[index];
 
-        // Если данных нет, выходим
-        if (!data || data.length === 0) {
-            container.innerHTML += '<p>Список пуст</p>';
-            return;
+        if (type === 'info') {
+            document.getElementById('info_edit_index').value = index;
+            document.getElementById('info_field_title').value = item.title || item.info_title;
+            document.getElementById('info_field_text').value = item.text || item.info_text;
+            document.getElementById('info_submit_btn').innerText = "Сохранить изменения";
+        } else if (type === 'news') {
+            const form = document.getElementById('newsForm');
+            form.querySelector('[name="edit_index"]').value = index;
+            form.querySelector('[name="title"]').value = item.title;
+            form.querySelector('[name="text"]').value = item.text;
+            form.querySelector('button[type="submit"]').innerText = "Сохранить новость";
         }
-
-        data.forEach((item, index) => {
-            // Для столовой логика отображения другая (так как там вложенные items)
-            if (type === 'canteen') {
-                container.innerHTML += `
-                    <div class="list-item-group" style="margin-bottom: 15px; border-bottom: 1px solid #eee;">
-                        <strong>📁 Категория: ${item.category}</strong>
-                        ${item.items.map((dish, dishIdx) => `
-                            <div class="list-item" style="padding-left: 20px; font-size: 0.9em;">
-                                <span>${dish.name} (${dish.price} ₽)</span>
-                                <div class="actions">
-                                    <button class="del-btn" onclick="deleteCanteenItem(${index}, ${dishIdx})">
-                                        <span class="material-icons-round">delete</span>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>`;
-            } else {
-                // Обычный список для Инфо, Новостей и Кабинетов
-                container.innerHTML += `
-                    <div class="list-item">
-                        <span>${item.title || item.name || item.subject || ('Кабинет ' + item.id)}</span>
-                        <div class="actions">
-                            <button class="edit-btn" onclick="editItem('${type}', ${index})">
-                                <span class="material-icons-round">edit</span>
-                            </button>
-                            <button class="del-btn" onclick="deleteItem('${type}', ${index})">
-                                <span class="material-icons-round">delete</span>
-                            </button>
-                        </div>
-                    </div>`;
-            }
-        });
-    } catch (e) { 
-        console.error("Ошибка загрузки списка:", e);
-        container.innerHTML = '<p>Ошибка загрузки данных</p>'; 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-}
 
-    // Загрузка при старте
     window.onload = () => loadDataList('news');
-    // Функция удаления для столовой (вставлять в admin.html в блок <script>)
-async function deleteCanteenItem(catIndex, itemIndex) {
-    if (!confirm('Удалить это блюдо из меню?')) return;
-    
-    const formData = new FormData();
-    formData.append('action', 'delete_canteen');
-    formData.append('catIndex', catIndex);
-    formData.append('itemIndex', itemIndex);
-    
-    try {
-        const res = await fetch('upload.php', { method: 'POST', body: formData });
-        const result = await res.json();
-        if (result.status === 'success') {
-            loadDataList('canteen'); // Перезагружаем список после удаления
-        }
-    } catch (e) {
-        console.error("Ошибка при удалении:", e);
-    }
-}
-// Универсальная отправка форм
-document.querySelectorAll('form').forEach(form => {
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
-        const res = await fetch('upload.php', { method: 'POST', body: formData });
-        const data = await res.json();
-        
-        alert(data.message);
-
-        // --- ВОТ ЭТОТ БЛОК ВСТАВЛЯТЬ СЮДА ---
-        form.reset();
-        const editIdxInput = form.querySelector('[name="edit_index"]');
-        if (editIdxInput) {
-            editIdxInput.value = "-1"; // Сбрасываем режим редактирования
-            const btn = form.querySelector('button[type="submit"]');
-            if (btn) btn.innerText = "Добавить"; // Возвращаем текст кнопки
-        }
-        // -------------------------------------
-
-        loadDataList(formData.get('type'));
-    };
-});
-
-// Функция для запуска редактирования
-async function editItem(type, index) {
-    const files = { news: 'news.json', info: 'info.json', room: 'rooms.json' };
-    const res = await fetch(files[type] + '?v=' + Date.now());
-    const data = await res.json();
-    const item = data[index];
-
-    if (type === 'info') {
-        document.getElementById('info_edit_index').value = index;
-        document.getElementById('info_field_title').value = item.title;
-        document.getElementById('info_field_text').value = item.text;
-        document.getElementById('info_submit_btn').innerText = "Сохранить изменения";
-        window.scrollTo(0, 0); // Поднять экран к форме
-    }
-}   
 </script>
-
 
 </body>
 </html>

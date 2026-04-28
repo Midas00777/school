@@ -1,5 +1,11 @@
 <?php
+// Отключаем вывод любых ошибок в тело ответа, чтобы не портить JSON
+error_reporting(0);
+ini_set('display_errors', 0);
+
 header('Content-Type: application/json; charset=utf-8');
+
+$response = ["status" => "error", "message" => "Неизвестная ошибка"];
 
 // 1. УДАЛЕНИЕ (Блюда столовой)
 if (isset($_POST['action']) && $_POST['action'] === 'delete_canteen') {
@@ -13,7 +19,7 @@ if (isset($_POST['action']) && $_POST['action'] === 'delete_canteen') {
     }
     file_put_contents($json, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
     echo json_encode(['status' => 'success', 'message' => 'Удалено']);
-    exit;
+    exit; // Важно: выходим сразу
 }
 
 // 2. УДАЛЕНИЕ (Обычное)
@@ -44,45 +50,50 @@ if (!isset($files[$type])) {
     exit;
 }
 
-$json = $files[$type];
-$data = file_exists($json) ? json_decode(file_get_contents($json), true) : [];
+$jsonFile = $files[$type];
+$data = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) : [];
 if (!is_array($data)) $data = [];
+
+// Логика загрузки файла
+$filePath = "";
+if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
+    $uploadDir = 'uploads/';
+    if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
+    $ext = pathinfo($_FILES['file']['name'], PATHINFO_EXTENSION);
+    $fileName = uniqid() . '.' . $ext;
+    if (move_uploaded_file($_FILES['file']['tmp_name'], $uploadDir . $fileName)) {
+        $filePath = $uploadDir . $fileName;
+    }
+}
 
 $newItem = [];
 
-// Сбор данных по типам
-if ($type === 'info') {
+if ($type === 'news') {
+    $newItem = [
+        'title' => $_POST['title'],
+        'text' => $_POST['text'],
+        'date' => date('d.m.Y'),
+        'file' => $filePath,
+        'type' => (isset($_FILES['file']) && strpos($_FILES['file']['type'], 'video') !== false) ? 'video' : 'image'
+    ];
+} elseif ($type === 'info') {
     $newItem = [
         'title' => $_POST['info_title'],
-        'text' => $_POST['info_text']
+        'text' => $_POST['info_text'],
+        'file' => $filePath
     ];
-} elseif ($type === 'news') {
-    // ... логика новостей (картинки и т.д.) ...
-    $newItem = ['title' => $_POST['title'], 'text' => $_POST['text'], 'date' => date('d.m.Y')];
 } elseif ($type === 'room') {
     $newItem = ['id' => $_POST['room_id'], 'name' => $_POST['room_name'], 'teacher' => $_POST['room_teacher'], 'floor' => $_POST['room_floor']];
 } elseif ($type === 'schedule') {
     $newItem = ['day' => $_POST['day'], 'time' => $_POST['time'], 'subject' => $_POST['subject'], 'room' => $_POST['room']];
-}
-
-// Логика сохранения для Инфо, Новостей, Кабинетов
-if ($type !== 'canteen') {
-    if ($editIndex >= 0 && isset($data[$editIndex])) {
-        $data[$editIndex] = $newItem;
-        $msg = "Изменения сохранены";
-    } else {
-        $data[] = $newItem;
-        $msg = "Запись добавлена";
-    }
-} else {
-    // Особая логика для столовой (категории)
+} elseif ($type === 'canteen') {
     $categoryName = $_POST['category'];
     $canteenItem = [
         'name' => $_POST['name'], 'price' => $_POST['price'], 'weight' => $_POST['weight'],
         'kcal' => $_POST['kcal'], 'prot' => $_POST['prot'], 'fat' => $_POST['fat'], 'carb' => $_POST['carb'],
-        'icon' => $_POST['icon'] ?: '🍽️'
+        'icon' => '🍽️'
     ];
-    
+
     $found = false;
     foreach ($data as &$catGroup) {
         if ($catGroup['category'] === $categoryName) {
@@ -91,8 +102,29 @@ if ($type !== 'canteen') {
         }
     }
     if (!$found) $data[] = ['category' => $categoryName, 'items' => [$canteenItem]];
-    $msg = "Блюдо добавлено";
+    $response = ['status' => 'success', 'message' => 'Блюдо добавлено'];
 }
 
-file_put_contents($json, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-echo json_encode(['status' => 'success', 'message' => $msg]);
+// Финальное сохранение для всех типов, кроме столовой (у неё своя логика выше)
+if ($type !== 'canteen') {
+    if ($editIndex >= 0 && isset($data[$editIndex])) {
+        // При редактировании сохраняем старый файл, если новый не загружен
+        if (empty($filePath) && isset($data[$editIndex]['file'])) {
+            $newItem['file'] = $data[$editIndex]['file'];
+            if ($type === 'news') $newItem['type'] = $data[$editIndex]['type'];
+        }
+        $data[$editIndex] = $newItem;
+        $response = ['status' => 'success', 'message' => 'Изменения сохранены'];
+    } else {
+        $data[] = $newItem;
+        $response = ['status' => 'success', 'message' => 'Запись добавлена'];
+    }
+}
+
+// Записываем в файл ОДИН РАЗ в самом конце
+file_put_contents($jsonFile, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+
+// Выводим ответ ОДИН РАЗ и завершаем работу
+echo json_encode($response);
+exit;
+?>
