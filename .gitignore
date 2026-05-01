@@ -4,5 +4,5 @@ info.json
 news.json
 rooms.json
 schedule.json
-
+uploads
 ~$*.xlsx
