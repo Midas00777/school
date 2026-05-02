@@ -1090,3 +1090,53 @@ body {
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
+/* Контейнер для кнопок смен */
+.shift-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+}
+
+/* Стили основных кнопок */
+.shift-btn, .class-btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #e2e8f0;
+    color: #475569;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.shift-btn:hover, .class-btn:hover {
+    background: #cbd5e1;
+    transform: translateY(-2px);
+}
+
+/* Активная кнопка */
+.shift-btn.active, .class-btn.active {
+    background: #2563eb; /* Твой основной синий цвет */
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Список классов */
+#class-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 12px;
+}
+
+.class-btn {
+    padding: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+}

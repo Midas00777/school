@@ -444,3 +444,108 @@ function closeNewsModal() {
         modal.style.display = 'none';
     }
 }
+let fullSchedule = null; // Здесь будем хранить весь JSON
+
+async function loadScheduleData() {
+    try {
+        // Загружаем наш сгенерированный JSON
+        const response = await fetch('data/schedule.json?v=' + Date.now());
+        fullSchedule = await response.json();
+    } catch (e) {
+        console.error("Ошибка загрузки расписания:", e);
+    }
+}
+// Функция выбора смены
+async function loadShift(shiftKey, btn) {
+    // 1. Снимаем выделение со ВСЕХ кнопок смен
+    document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
+    // 2. Выделяем текущую
+    btn.classList.add('active');
+
+    if (!fullSchedule) {
+        await loadScheduleData();
+    }
+
+    const classListDiv = document.getElementById('class-list');
+    const container = document.getElementById('schedule-container');
+    
+    classListDiv.innerHTML = ''; 
+    container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px;">Выберите класс</div>';
+
+    // Проверка, есть ли такая смена в JSON
+    if (!fullSchedule || !fullSchedule[shiftKey]) {
+        console.error("Смена не найдена в JSON:", shiftKey);
+        container.innerHTML = '<div style="text-align: center; color: red; padding: 40px;">Данные для этой смены не найдены. Проверьте запуск PHP-скрипта.</div>';
+        return;
+    }
+
+    // Создаем кнопки классов
+    const classes = Object.keys(fullSchedule[shiftKey]).sort();
+    classes.forEach(className => {
+        const classBtn = document.createElement('button');
+        classBtn.className = 'class-btn'; // Используем класс из CSS
+        classBtn.innerText = className.toUpperCase();
+        classBtn.onclick = () => showClassSchedule(shiftKey, className, classBtn);
+        classListDiv.appendChild(classBtn);
+    });
+}
+
+// Функция отрисовки таблицы
+function showClassSchedule(shiftKey, className, btn) {
+    // 1. Снимаем выделение со ВСЕХ кнопок классов
+    document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
+    // 2. Выделяем текущую
+    btn.classList.add('active');
+
+    const container = document.getElementById('schedule-container');
+    const data = fullSchedule[shiftKey][className];
+    
+    if (!data) {
+        container.innerHTML = 'Нет данных';
+        return;
+    }
+
+    let html = '';
+    for (const day in data) {
+        html += `
+            <div class="day-block" style="margin-bottom: 25px;">
+                <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px;">${day}</h3>
+                <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                    <thead style="background: #f1f5f9;">
+                        <tr>
+                            <th style="padding: 12px; border: 1px solid #e2e8f0;">№</th>
+                            <th style="padding: 12px; border: 1px solid #e2e8f0;">Время</th>
+                            <th style="padding: 12px; border: 1px solid #e2e8f0;">Предмет</th>
+                            <th style="padding: 12px; border: 1px solid #e2e8f0;">Каб.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data[day].map(lesson => `
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${lesson.num || ''}</td>
+                                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${lesson.time || ''}</td>
+                                <td style="padding: 12px; border: 1px solid #e2e8f0;">${lesson.name || lesson.subject}</td>
+                                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #2563eb; font-weight: bold;">${lesson.room || ''}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    container.innerHTML = html;
+}
+
+// Автоматическая загрузка первой смены при открытии раздела
+function loadSchedule() {
+    const firstShiftBtn = document.querySelector('.shift-selector .tab-btn');
+    if (firstShiftBtn) loadShift('1_smena', firstShiftBtn);
+}
+// Добавь это в самый низ logic.js
+document.addEventListener('DOMContentLoaded', () => {
+    loadScheduleData().then(() => {
+        // После загрузки данных имитируем нажатие на первую кнопку
+        const firstBtn = document.querySelector('.shift-btn');
+        if (firstBtn) loadShift('1_smena', firstBtn);
+    });
+});

@@ -75,15 +75,27 @@
                 </div>
             </section>
 
-            <section id="schedule" class="content-section">
-                <div class="section-wrapper">
-                    <div class="section-title">
-                        <span class="material-icons-round">event_note</span>
-                        <h2>Расписание занятий</h2>
-                    </div>
-                    <div id="schedule-container"></div>
-                </div>
-            </section>
+          <section id="schedule" class="content-section">
+    <div class="section-wrapper">
+        <div class="section-title">Расписание уроков</div>
+        
+     <div class="shift-selector">
+    <button class="shift-btn active" onclick="loadShift('1_smena', this)">1 Смена (5-11 классы)</button>
+    <button class="shift-btn" onclick="loadShift('2_smena', this)">2 Смена (5-11 классы)</button>
+    <button class="shift-btn" onclick="loadShift('nachalka_1', this)">Начальная школа (1 смена)</button>
+    <button class="shift-btn" onclick="loadShift('nachalka_2', this)">Начальная школа (2 смена)</button>
+</div>
+
+        <div id="class-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+            </div>
+
+        <div id="schedule-container" class="schedule-grid">
+            <div style="text-align: center; color: var(--text-muted); padding: 40px;">
+                Выберите смену и класс для просмотра расписания
+            </div>
+        </div>
+    </div>
+</section>
 
             <section id="canteen" class="content-section">
                 <div class="section-wrapper">
