@@ -24,6 +24,18 @@
         .del-btn { color: #ef4444; cursor: pointer; background: none; border: none; }
         .edit-btn { color: var(--primary); cursor: pointer; background: none; border: none; }
         .back-btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: #64748b; font-weight: 600; padding: 10px; margin-bottom: 10px; }
+    /* Добавьте в конец вашего блока <style> */
+.news-preview-mini {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+.list-item-content {
+    display: flex;
+    align-items: center;
+}
     </style>
 </head>
 <body>
@@ -54,7 +66,8 @@
             <input type="hidden" name="edit_index" value="-1">
             <input type="text" name="title" placeholder="Заголовок новости" required>
             <textarea name="text" placeholder="Текст новости" rows="3" required></textarea>
-            <input type="file" name="file" accept="image/*,video/*">
+            <input type="file" name="files[]" accept="image/*" multiple>
+<small style="color: #64748b; display: block; margin-top: 5px;">Можно выбрать несколько фото (удерживайте Ctrl)</small>
             <button type="submit">Опубликовать новость</button>
         </form>
         <div id="list-news"></div>

@@ -2,11 +2,57 @@
 // ==========================================
 let allRooms = [];
 let currentFloor = 1;
+let aboba = 100;
 
 // ==========================================
 // 2. УПРАВЛЕНИЕ СЕКЦИЯМИ И ВРЕМЕНЕМ
 // ==========================================
+// --- ЛОГИКА СЛАЙДЕРА ---
+let currentSlide = 0;
 
+function moveSlide(direction) {
+    const track = document.getElementById('sliderTrack');
+    const slides = track.querySelectorAll('img');
+    const dots = document.querySelectorAll('.dot');
+    
+    if (!track || slides.length === 0) return;
+
+    currentSlide = (currentSlide + direction + slides.length) % slides.length;
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    
+    dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+    });
+}
+
+function setSlide(index) {
+    currentSlide = index;
+    moveSlide(0);
+}
+
+// Вспомогательная функция для генерации HTML слайдера
+function createSliderHtml(images) {
+    if (!images || images.length === 0) return '<img src="https://placehold.co/600x400?text=Нет+фото" class="modal-full-img">';
+    if (images.length === 1) return `<img src="${images[0]}" class="modal-full-img">`;
+
+    const slides = images.map(img => `<img src="${img}" alt="slide">`).join('');
+    const dots = images.map((_, i) => `<div class="dot ${i === 0 ? 'active' : ''}" onclick="setSlide(${i})"></div>`).join('');
+
+    return `
+        <div class="news-slider">
+            <div class="slider-track" id="sliderTrack">
+                ${slides}
+            </div>
+            <button class="slider-btn btn-prev" onclick="moveSlide(-1)">
+                <span class="material-icons-round">chevron_left</span>
+            </button>
+            <button class="slider-btn btn-next" onclick="moveSlide(1)">
+                <span class="material-icons-round">chevron_right</span>
+            </button>
+            <div class="slider-dots">${dots}</div>
+        </div>
+    `;
+}
 function openSection(sectionId, clickedButton) {
     const sections = document.querySelectorAll('.content-section');
     const buttons = document.querySelectorAll('.nav-btn');
@@ -81,30 +127,30 @@ async function loadNews() {
     const container = document.getElementById('news-container');
     if (!container) return;
     try {
-        // Добавляем v=Date.now() чтобы браузер не кешировал старые новости
         const response = await fetch('news.json?v=' + Date.now());
         const news = await response.json();
         
-        container.innerHTML = news.map((item, index) => `
-            <div class="news-card" onclick="openNewsModal(${index})">
-                <div class="news-media-container" style="width: 100%; height: 200px; overflow: hidden; border-radius: 12px 12px 0 0; background: #eee;">
-                    ${item.type === 'video' 
-                        ? `<video src="${item.file}" class="news-img" style="width: 100%; height: 100%; object-fit: cover;"></video>`
-                        : `<img src="${item.file}" class="news-img" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://placehold.co/600x400?text=Нет+фото'">`}
-                </div>
-                <div class="news-content">
-                    <span class="news-date">${item.date}</span>
-                    <h3>${item.title}</h3>
-                    <p>${item.text.substring(0, 100)}${item.text.length > 100 ? '...' : ''}</p> 
-                </div>
-            </div>
-        `).join('');
+        container.innerHTML = news.map((item, index) => {
+            // Берем первую картинку из массива files или старое одиночное поле file
+            const previewImg = (item.files && item.files.length > 0) ? item.files[0] : (item.file || 'https://placehold.co/600x400?text=Нет+фото');
 
-        // Сохраняем новости в глобальную переменную для модального окна
+            return `
+                <div class="news-card" onclick="openNewsModal(${index})">
+                    <div class="news-media-container" style="width: 100%; height: 200px; overflow: hidden; border-radius: 12px 12px 0 0; background: #eee;">
+                        <img src="${previewImg}" class="news-img" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <div class="news-content">
+                        <span class="news-date">${item.date}</span>
+                        <h3>${item.title}</h3>
+                        <p>${item.text.substring(0, 100)}${item.text.length > 100 ? '...' : ''}</p> 
+                    </div>
+                </div>
+            `;
+        }).join('');
+
         window.currentNews = news; 
     } catch (e) {
         console.error("Ошибка загрузки новостей:", e);
-        container.innerHTML = '<p>Ошибка при загрузке новостей. Проверьте news.json</p>';
     }
 }
 
@@ -113,20 +159,22 @@ function openNewsModal(index) {
     const modal = document.getElementById('news-modal');
     const body = document.getElementById('modal-body');
 
-    const mediaHtml = newsItem.type === 'video' 
-        ? `<video src="${newsItem.file}" controls autoplay class="modal-full-img"></video>`
-        : `<img src="${newsItem.file}" class="modal-full-img">`;
+    currentSlide = 0; // Сбрасываем слайдер на первое фото
+
+    // Проверяем наличие массива картинок
+    const images = newsItem.files || (newsItem.file ? [newsItem.file] : []);
 
     body.innerHTML = `
-        ${mediaHtml}
-        <span class="news-date">${newsItem.date}</span>
-        <h2 style="margin: 15px 0">${newsItem.title}</h2>
-        <div class="modal-body-text">${newsItem.text}</div>
+        ${createSliderHtml(images)}
+        <div style="padding: 20px;">
+            <span class="news-date">${newsItem.date}</span>
+            <h2 style="margin: 15px 0; color: var(--primary);">${newsItem.title}</h2>
+            <div class="modal-body-text" style="font-size: 18px; line-height: 1.6; white-space: pre-wrap;">${newsItem.text}</div>
+        </div>
     `;
 
     modal.style.display = 'flex';
 }
-
 function closeNewsModal() {
     const modal = document.getElementById('news-modal');
     modal.style.display = 'none';
@@ -419,24 +467,16 @@ function showFullInfoModal(title, text) {
 }
 
 // Функция открытия модалки (используем твой news-modal)
-function openFullInfo(title, text) {
-    const modal = document.getElementById('news-modal');
+function openFullInfo(title, text, images) {
     const modalBody = document.getElementById('modal-body');
+    currentSlide = 0; // Сброс слайдера
     
-    if (!modal || !modalBody) {
-        console.error("Модальное окно не найдено в HTML!");
-        return;
-    }
-
     modalBody.innerHTML = `
-        <h2 style="margin-bottom: 20px; color: var(--primary); font-size: 28px;">${title}</h2>
-        <div style="font-size: 18px; line-height: 1.6; color: var(--text-main); white-space: pre-wrap;">
-            ${text}
-        </div>
+        <h2 style="margin-bottom: 20px; color: var(--primary);">${title}</h2>
+        ${createSlider(images)}
+        <div style="font-size: 18px; line-height: 1.6; white-space: pre-wrap;">${text}</div>
     `;
-    
-    // Показываем окно
-    modal.style.display = 'flex';
+    document.getElementById('news-modal').style.display = 'flex';
 }
 function closeNewsModal() {
     const modal = document.getElementById('news-modal');
