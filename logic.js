@@ -220,30 +220,30 @@ async function loadCanteen() {
     }
 }
 
-async function loadSchedule() {
-    const container = document.getElementById('schedule-container');
-    if (!container) return;
+// async function loadSchedule() {
+//     const container = document.getElementById('schedule-container');
+//     if (!container) return;
 
-    // Заглушка данных. Позже можно сделать fetch('schedule.json')
-    const scheduleData = [
-        { time: "08:00 - 08:45", subject: "Математика", room: "101", teacher: "Иванов И.И." },
-        { time: "08:55 - 09:40", subject: "Русский язык", room: "204", teacher: "Петрова А.В." },
-        { time: "09:50 - 10:35", subject: "Информатика", room: "302", teacher: "Сидоров К.П." }
-    ];
+//     // Заглушка данных. Позже можно сделать fetch('schedule.json')
+//     const scheduleData = [
+//         { time: "08:00 - 08:45", subject: "Математика", room: "101", teacher: "Иванов И.И." },
+//         { time: "08:55 - 09:40", subject: "Русский язык", room: "204", teacher: "Петрова А.В." },
+//         { time: "09:50 - 10:35", subject: "Информатика", room: "302", teacher: "Сидоров К.П." }
+//     ];
 
-    container.innerHTML = `
-        <table class="schedule-table">
-            <thead>
-                <tr><th>Время</th><th>Предмет</th><th>Каб.</th><th>Учитель</th></tr>
-            </thead>
-            <tbody>
-                ${scheduleData.map(row => `
-                    <tr><td>${row.time}</td><td><strong>${row.subject}</strong></td><td>${row.room}</td><td>${row.teacher}</td></tr>
-                `).join('')}
-            </tbody>
-        </table>
-    `;
-}
+//     container.innerHTML = `
+//         <table class="schedule-table">
+//             <thead>
+//                 <tr><th>Время</th><th>Предмет</th><th>Каб.</th><th>Учитель</th></tr>
+//             </thead>
+//             <tbody>
+//                 ${scheduleData.map(row => `
+//                     <tr><td>${row.time}</td><td><strong>${row.subject}</strong></td><td>${row.room}</td><td>${row.teacher}</td></tr>
+//                 `).join('')}
+//             </tbody>
+//         </table>
+//     `;
+// }
 
 // ==========================================
 // 5. ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
@@ -488,23 +488,20 @@ let fullSchedule = null; // Здесь будем хранить весь JSON
 
 async function loadScheduleData() {
     try {
-        // Загружаем наш сгенерированный JSON
-        const response = await fetch('data/schedule.json?v=' + Date.now());
+        // Убираем 'data/' перед названием файла
+        const response = await fetch('schedule.json?v=' + Date.now()); 
         fullSchedule = await response.json();
+        console.log("Расписание успешно загружено:", fullSchedule); // Добавь для проверки
     } catch (e) {
         console.error("Ошибка загрузки расписания:", e);
     }
 }
 // Функция выбора смены
 async function loadShift(shiftKey, btn) {
-    // 1. Снимаем выделение со ВСЕХ кнопок смен
     document.querySelectorAll('.shift-btn').forEach(b => b.classList.remove('active'));
-    // 2. Выделяем текущую
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
 
-    if (!fullSchedule) {
-        await loadScheduleData();
-    }
+    if (!fullSchedule) await loadScheduleData();
 
     const classListDiv = document.getElementById('class-list');
     const container = document.getElementById('schedule-container');
@@ -512,29 +509,25 @@ async function loadShift(shiftKey, btn) {
     classListDiv.innerHTML = ''; 
     container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 40px;">Выберите класс</div>';
 
-    // Проверка, есть ли такая смена в JSON
-    if (!fullSchedule || !fullSchedule[shiftKey]) {
-        console.error("Смена не найдена в JSON:", shiftKey);
-        container.innerHTML = '<div style="text-align: center; color: red; padding: 40px;">Данные для этой смены не найдены. Проверьте запуск PHP-скрипта.</div>';
-        return;
-    }
+    if (!fullSchedule || !fullSchedule[shiftKey]) return;
 
-    // Создаем кнопки классов
+    // --- ВОТ ТУТ МАГИЯ ПОРЯДКА ДНЕЙ ---
+    const daysOrder = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"];
+    
+    // Получаем список классов (например, "5А", "6Б")
     const classes = Object.keys(fullSchedule[shiftKey]).sort();
+    
     classes.forEach(className => {
         const classBtn = document.createElement('button');
-        classBtn.className = 'class-btn'; // Используем класс из CSS
+        classBtn.className = 'class-btn';
         classBtn.innerText = className.toUpperCase();
         classBtn.onclick = () => showClassSchedule(shiftKey, className, classBtn);
         classListDiv.appendChild(classBtn);
     });
 }
-
 // Функция отрисовки таблицы
 function showClassSchedule(shiftKey, className, btn) {
-    // 1. Снимаем выделение со ВСЕХ кнопок классов
     document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
-    // 2. Выделяем текущую
     btn.classList.add('active');
 
     const container = document.getElementById('schedule-container');
@@ -545,35 +538,41 @@ function showClassSchedule(shiftKey, className, btn) {
         return;
     }
 
+    const daysOrder = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"];
     let html = '';
-    for (const day in data) {
-        html += `
-            <div class="day-block" style="margin-bottom: 25px;">
-                <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px;">${day}</h3>
-                <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
-                    <thead style="background: #f1f5f9;">
-                        <tr>
-                            <th style="padding: 12px; border: 1px solid #e2e8f0;">№</th>
-                            <th style="padding: 12px; border: 1px solid #e2e8f0;">Время</th>
-                            <th style="padding: 12px; border: 1px solid #e2e8f0;">Предмет</th>
-                            <th style="padding: 12px; border: 1px solid #e2e8f0;">Каб.</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data[day].map(lesson => `
+
+    // Вместо for..in используем forEach по нашему списку
+    daysOrder.forEach(day => {
+        if (data[day]) { // Если уроки на этот день есть в базе
+            html += `
+                <div class="day-block" style="margin-bottom: 25px;">
+                    <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px;">${day}</h3>
+                    <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                        <thead style="background: #f1f5f9;">
                             <tr>
-                                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${lesson.num || ''}</td>
-                                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${lesson.time || ''}</td>
-                                <td style="padding: 12px; border: 1px solid #e2e8f0;">${lesson.name || lesson.subject}</td>
-                                <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #2563eb; font-weight: bold;">${lesson.room || ''}</td>
+                                <th style="padding: 12px; border: 1px solid #e2e8f0;">№</th>
+                                <th style="padding: 12px; border: 1px solid #e2e8f0;">Время</th>
+                                <th style="padding: 12px; border: 1px solid #e2e8f0;">Предмет</th>
+                                <th style="padding: 12px; border: 1px solid #e2e8f0;">Каб.</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    }
-    container.innerHTML = html;
+                        </thead>
+                        <tbody>
+                            ${data[day].map(lesson => `
+                                <tr>
+                                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${lesson.num || ''}</td>
+                                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${lesson.time || ''}</td>
+                                    <td style="padding: 12px; border: 1px solid #e2e8f0;">${lesson.name || lesson.subject}</td>
+                                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #2563eb; font-weight: bold;">${lesson.room || ''}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+    });
+    
+    container.innerHTML = html || '<div style="padding:20px;">На этот класс расписание не заполнено</div>';
 }
 
 // Автоматическая загрузка первой смены при открытии раздела
