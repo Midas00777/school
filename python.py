@@ -91,7 +91,7 @@ if sn2:
     print(f"Парсинг Началки 2 (лист: {sn2})...")
     raw_data["nachalka_2"] = parse_schedule_generic(fn, sn2, 2, is_nachalka=True)
 
-# --- ГАРАНТИЯ ПОРЯДКА ДЛЯ САЙТА ---
+# --- ГАРАНТИЯ ПОРЯДКА ДЛЯ САЙТА ---# --- ИСПРАВЛЕННАЯ СТРУКТУРА ДЛЯ САЙТА ---
 ordered_shifts = ["1_smena", "2_smena", "nachalka_1", "nachalka_2"]
 ordered_days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"]
 
@@ -99,14 +99,23 @@ final_json = {}
 
 for shift in ordered_shifts:
     if shift in raw_data:
-        # Пересобираем словарь с правильным порядком дней
-        final_json[shift] = {
-            day: raw_data[shift][day] 
-            for day in ordered_days if day in raw_data[shift]
-        }
+        final_json[shift] = {}
+        
+        # Сначала соберем все уникальные классы для этой смены
+        all_classes = set()
+        for day in raw_data[shift]:
+            all_classes.update(raw_data[shift][day].keys())
+        
+        # Для каждого класса создаем структуру, где дни идут по порядку
+        for cls in sorted(list(all_classes)):
+            final_json[shift][cls] = {}
+            for day in ordered_days:
+                if day in raw_data[shift] and cls in raw_data[shift][day]:
+                    # Если есть уроки для этого класса в этот день — добавляем
+                    final_json[shift][cls][day] = raw_data[shift][day][cls]
 
 # Сохранение
 with open('schedule.json', 'w', encoding='utf-8') as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
-print("\n>>> Готво! Кнопки дней теперь в ПРАВИЛЬНОМ порядке, а Началка 2 заполнена.")
+print("\n>>> Теперь структура JSON совпадает с логикой JS, и дни идут по порядку!")

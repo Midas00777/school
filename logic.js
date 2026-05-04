@@ -527,37 +527,42 @@ async function loadShift(shiftKey, btn) {
 }
 // Функция отрисовки таблицы
 function showClassSchedule(shiftKey, className, btn) {
+    // 1. Подсвечиваем выбранный класс
     document.querySelectorAll('.class-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    if (btn) btn.classList.add('active');
 
     const container = document.getElementById('schedule-container');
     const data = fullSchedule[shiftKey][className];
     
     if (!data) {
-        container.innerHTML = 'Нет данных';
+        container.innerHTML = '<div style="padding:20px;">Расписание не заполнено</div>';
         return;
     }
 
+    // --- ПРИНУДИТЕЛЬНЫЙ ПОРЯДОК ДНЕЙ ---
     const daysOrder = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"];
     let html = '';
 
-    // Вместо for..in используем forEach по нашему списку
-    daysOrder.forEach(day => {
-        if (data[day]) { // Если уроки на этот день есть в базе
+    // Перебираем строго по нашему списку
+    daysOrder.forEach(dayName => {
+        // Ищем данные дня (проверяем все варианты написания)
+        const dayData = data[dayName] || data[dayName.toLowerCase()] || data[dayName.toUpperCase()];
+        
+        if (dayData) {
             html += `
                 <div class="day-block" style="margin-bottom: 25px;">
-                    <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px;">${day}</h3>
-                    <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                    <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px; text-transform: uppercase;">${dayName}</h3>
+                    <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <thead style="background: #f1f5f9;">
                             <tr>
-                                <th style="padding: 12px; border: 1px solid #e2e8f0;">№</th>
-                                <th style="padding: 12px; border: 1px solid #e2e8f0;">Время</th>
+                                <th style="padding: 12px; border: 1px solid #e2e8f0; width: 40px;">№</th>
+                                <th style="padding: 12px; border: 1px solid #e2e8f0; width: 110px;">Время</th>
                                 <th style="padding: 12px; border: 1px solid #e2e8f0;">Предмет</th>
-                                <th style="padding: 12px; border: 1px solid #e2e8f0;">Каб.</th>
+                                <th style="padding: 12px; border: 1px solid #e2e8f0; width: 70px;">Каб.</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${data[day].map(lesson => `
+                            ${dayData.map(lesson => `
                                 <tr>
                                     <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${lesson.num || ''}</td>
                                     <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${lesson.time || ''}</td>
@@ -571,10 +576,9 @@ function showClassSchedule(shiftKey, className, btn) {
             `;
         }
     });
-    
-    container.innerHTML = html || '<div style="padding:20px;">На этот класс расписание не заполнено</div>';
-}
 
+    container.innerHTML = html;
+}   
 // Автоматическая загрузка первой смены при открытии раздела
 function loadSchedule() {
     const firstShiftBtn = document.querySelector('.shift-selector .tab-btn');
