@@ -24,9 +24,8 @@ def parse_schedule_generic(file_path, sheet_name, start_col, is_nachalka=False, 
     try:
         df = pd.read_excel(file_path, sheet_name=sheet_name, header=None)
         
-        # Названия классов: строка 1 (индекс 0), начиная с start_col через один столбец
-        classes = df.iloc[0, start_col::2].dropna().tolist()
-        classes = [str(c).strip() for c in classes]
+        # Классы всегда в первой строке
+        classes = [str(c).strip() for c in df.iloc[0, start_col::2].dropna().tolist()]
         
         result = {}
         day_map = {
@@ -35,57 +34,50 @@ def parse_schedule_generic(file_path, sheet_name, start_col, is_nachalka=False, 
         }
 
         current_day = ""
-        # Для Началки 2 данные начинаются с 11 строки, для остальных — со 2-й
-        start_row = 11 if is_nachalka_2 else 2
-
-        for idx in range(start_row, len(df)):
+        # Начинаем с 1 строки (индекс 0), чтобы ничего не пропустить
+        for idx in range(len(df)):
             row = df.iloc[idx]
             
-            # 1. Определяем день недели (Колонка A)
+            # Читаем колонку А (день)
             val_a = str(row[0]).strip().lower() if pd.notna(row[0]) else ""
             if val_a in day_map:
                 current_day = day_map[val_a]
             
             if not current_day: continue
             
-            # 2. Определяем номер урока (Колонка B)
+            # Читаем номер урока (Колонка B)
             lesson_num = str(row[1]).strip() if pd.notna(row[1]) else ""
             
-            # Проверка на пустую строку
-            has_lesson_content = any(pd.notna(row[start_col + i*2]) for i in range(len(classes)))
-            if not lesson_num and not has_lesson_content:
-                continue
-
-            if current_day not in result:
-                result[current_day] = {c: [] for c in classes}
+            # Если это строка с данными (есть хоть какой-то предмет в ряду)
+            has_content = any(pd.notna(row[start_col + i*2]) for i in range(len(classes)))
             
-            # ... (начало цикла по классам остается прежним)
-            for i, cls in enumerate(classes):
-                col_idx = start_col + (i * 2)
-                if col_idx >= len(row): continue
+            if has_content:
+                if current_day not in result:
+                    result[current_day] = {c: [] for c in classes}
                 
-                subject = row[col_idx]
-                room = row[col_idx + 1] if col_idx + 1 < len(row) else ""
-                
-                if pd.notna(subject) and str(subject).strip():
-                    # 1. ОПРЕДЕЛЯЕМ ПОРЯДКОВЫЙ НОМЕР УРОКА
-                    # Если номера нет в Excel (lesson_num), берем текущую длину списка уроков + 1
-                    final_num = lesson_num if lesson_num else str(len(result[current_day][cls]) + 1)
+                for i, cls in enumerate(classes):
+                    col_idx = start_col + (i * 2)
+                    if col_idx >= len(row): continue
+                    
+                    subject = row[col_idx]
+                    room = row[col_idx + 1] if col_idx + 1 < len(row) else ""
+                    
+                    if pd.notna(subject) and str(subject).strip():
+                        # Авто-нумерация, если в Excel забыли номер
+                        final_num = lesson_num if (lesson_num and lesson_num.isdigit()) else str(len(result[current_day][cls]) + 1)
+                        
+                        if is_nachalka:
+                            time_map = TIME_NACHALKA_2 if is_nachalka_2 else TIME_NACHALKA_1
+                            current_time = time_map.get(final_num, "")
+                        else:
+                            current_time = str(row[2]) if pd.notna(row[2]) else ""
 
-                    # 2. ОПРЕДЕЛЯЕМ ВРЕМЯ
-                    if is_nachalka:
-                        time_map = TIME_NACHALKA_2 if is_nachalka_2 else TIME_NACHALKA_1
-                        # Берем время из словаря по порядковому номеру
-                        current_time = time_map.get(final_num, "")
-                    else:
-                        current_time = str(row[2]) if pd.notna(row[2]) else ""
-
-                    result[current_day][cls].append({
-                        "num": final_num, # Номер теперь всегда будет (1, 2, 3...)
-                        "time": current_time, # Время подтянется по номеру
-                        "name": str(subject).strip(),
-                        "room": str(room).strip() if pd.notna(room) else ""
-                    })
+                        result[current_day][cls].append({
+                            "num": final_num,
+                            "time": current_time,
+                            "name": str(subject).strip(),
+                            "room": str(room).strip() if pd.notna(room) else ""
+                        })
         return result
     except Exception as e:
         print(f"--- Ошибка в листе {sheet_name}: {e}")
@@ -119,7 +111,7 @@ if sn1: raw_data["nachalka_1"] = parse_schedule_generic(fn, sn1, 2, is_nachalka=
 sn2 = get_sheet_name(fn, 'началка 2')
 if sn2: raw_data["nachalka_2"] = parse_schedule_generic(fn, sn2, 2, is_nachalka=True, is_nachalka_2=True)
 
-# --- ГАРАНТИЯ ПОРЯДКА И СТРУКТУРЫ ДЛЯ САЙТА ---
+# --- ФИНАЛЬНАЯ СОРТИРОВКА И КЛИНАП ---
 ordered_shifts = ["1_smena", "2_smena", "nachalka_1", "nachalka_2"]
 ordered_days = ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница"]
 
@@ -129,20 +121,26 @@ for shift in ordered_shifts:
     if shift in raw_data:
         final_json[shift] = {}
         
-        # Собираем все классы из этой смены
+        # Получаем список всех классов в этой смене
         all_classes = set()
-        for day in raw_data[shift]:
-            all_classes.update(raw_data[shift][day].keys())
+        for day_name in raw_data[shift]:
+            all_classes.update(raw_data[shift][day_name].keys())
         
-        # Формируем структуру: Смена -> Класс -> День недели (по порядку)
         for cls in sorted(list(all_classes)):
             final_json[shift][cls] = {}
+            # ЖЕСТКО идем по списку ordered_days
             for day in ordered_days:
                 if day in raw_data[shift] and cls in raw_data[shift][day]:
-                    final_json[shift][cls][day] = raw_data[shift][day][cls]
+                    lessons = raw_data[shift][day][cls]
+                    if lessons: # Добавляем день, только если в нем есть уроки
+                        final_json[shift][cls][day] = lessons
 
-# Сохранение итогового файла
-with open('schedule.json', 'w', encoding='utf-8') as f:
+# Сохранение с принудительным обновлением пути
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+target_path = os.path.join(current_dir, 'schedule.json')
+
+with open(target_path, 'w', encoding='utf-8') as f:
     json.dump(final_json, f, ensure_ascii=False, indent=2)
 
-print("\n>>> ГОТОВО! schedule.json обновлен. Проверь время в начальной школе.")
+print(f"\n>>> ПРОВЕРКА: Файл переписан. В смене nachalka_2 для первого класса первый день: {list(final_json.get('nachalka_2', {}).get('2А', {}).keys())[:1]}")
