@@ -97,27 +97,28 @@ function updateDateTime() {
 // ==========================================
 
 async function loadFloor(floorNum, btn) {
-    // 1. Подсветка кнопки
+    // 1. Подсветка кнопки (оставляем как было)
     document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
 
-    // 2. Загрузка карты
+    // 2. Обновление картинки этажа
     const container = document.getElementById('svg-map-container');
     if (container) {
-        try {
-            const response = await fetch(`${floorNum}Этаж.svg?v=${Date.now()}`);
-            if (response.ok) {
-                container.innerHTML = await response.text();
-            } else {
-                container.innerHTML = `<div class="map-error">Карта ${floorNum} этажа не загружена</div>`;
-            }
-        } catch (e) {
-            container.innerHTML = `<div class="map-error">Ошибка связи с сервером</div>`;
-        }
+        // Очищаем контейнер и вставляем тег img вместо кода SVG
+        // Добавляем параметр ?v= для обхода кэша, как ты делал раньше
+        container.innerHTML = `
+            <img id="floor-image" 
+                 src="img/${floorNum}Этаж.png?v=${Date.now()}" 
+                 alt="План ${floorNum} этажа" 
+                 style="width: 100%; height: auto; border-radius: 12px; display: block;"
+                 onerror="this.parentElement.innerHTML='<div class=map-error>Карта ${floorNum} этажа не найдена</div>'">
+        `;
     }
 
-    // 3. Обновляем список кабинетов под этот этаж
-    filterRoomsByFloor(floorNum);
+    // 3. Обновляем список кабинетов под этот этаж (твоя важная функция)
+    if (typeof filterRoomsByFloor === "function") {
+        filterRoomsByFloor(floorNum);
+    }
 }
 
 // ==========================================
