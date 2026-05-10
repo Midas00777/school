@@ -96,8 +96,8 @@
 
           <section id="schedule" class="content-section">
     <div class="section-wrapper">
-        <div class="section-title">Расписание уроков</div>
-        
+        <div class="section-title"></div>
+        <!-- ^ Расписание уроков -->
      <div class="shift-selector">
     <button class="shift-btn active" onclick="loadShift('1_smena', this)">1 Смена (5-11 классы)</button>
     <button class="shift-btn" onclick="loadShift('2_smena', this)">2 Смена (5-11 классы)</button>
@@ -116,15 +116,39 @@
     </div>
 </section>
 
-            <section id="canteen" class="content-section">
-                <div class="section-wrapper">
-                    <div class="section-title">
-                        <span class="material-icons-round">restaurant</span>
-                        <h2>Меню столовой</h2>
-                    </div>
-                    <div id="canteen-container" class="canteen-grid"></div>
+    <section id="canteen" class="content-section">
+    <div class="section-wrapper">
+        <div class="section-title"></div>
+        <!-- ^Буфет -->
+        
+        <div id="canteen-selection" class="canteen-grid">
+            <div class="canteen-card regular" onclick="showCanteenMenu('regular')">
+                <div class="card-icon">
+                    <span class="material-icons-round">restaurant_menu</span>
                 </div>
-            </section>
+                <h3>Основное меню</h3>
+                <p>Ежедневное горячее питание</p>
+                <div class="card-badge">7-11 / 12+ лет</div>
+            </div>
+
+            <div class="canteen-card diabetic" onclick="showCanteenMenu('diabetic')">
+                <div class="card-icon">
+                    <span class="material-icons-round">health_and_safety</span>
+                </div>
+                <h3>Диетическое меню</h3>
+                <p>Специализированное питание</p>
+                <div class="card-badge">Диабет</div>
+            </div>
+        </div>
+
+        <div id="canteen-viewer" style="display: none;">
+            <button class="back-btn" onclick="backToCanteenSelection()">
+                <span class="material-icons-round">arrow_back</span> Вернуться в меню
+            </button>
+            <div id="menu-display-area" class="menu-frame"></div>
+        </div>
+    </div>
+</section>
 
             <section id="info" class="content-section">
                 <div class="section-wrapper">

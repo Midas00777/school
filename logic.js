@@ -60,6 +60,11 @@ function createSliderHtml(images) {
     `;
 }
 function openSection(sectionId, clickedButton) {
+    document.body.style.overflow = 'auto';
+
+    // 2. Если есть открытые модалки — закрываем их (на всякий случай)
+    const modal = document.getElementById('news-modal');
+    if (modal) modal.style.display = 'none';
     const sections = document.querySelectorAll('.content-section');
     const buttons = document.querySelectorAll('.nav-btn');
     const targetSection = document.getElementById(sectionId);
@@ -224,10 +229,11 @@ function openNewsModal(index) {
 }
 function closeNewsModal() {
     const modal = document.getElementById('news-modal');
-    modal.style.display = 'none';
-    // Остановка видео при закрытии
-    const video = modal.querySelector('video');
-    if (video) video.pause();
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    // КРИТИЧЕСКИ ВАЖНО: Возвращаем скролл
+    document.body.style.overflow = 'auto'; 
 }
 
 async function loadCanteen() {
@@ -874,4 +880,32 @@ async function editItem(type, index) {
         form.querySelector('button[type="submit"]').innerText = "Сохранить новость";
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function showCanteenMenu(type) {
+    const selection = document.getElementById('canteen-selection');
+    const viewer = document.getElementById('canteen-viewer');
+    const displayArea = document.getElementById('menu-display-area');
+
+    selection.style.display = 'none';
+    viewer.style.display = 'block';
+
+    // Укажите здесь пути к вашим файлам
+    const menuFiles = {
+        'regular': 'menus/main_menu.pdf', // Путь к PDF основного меню
+        'diabetic': 'menus/diabetic_menu.pdf' // Путь к PDF для диабетиков
+    };
+
+    const fileUrl = menuFiles[type];
+    
+    // Проверка: если файл — картинка, выводим <img>, если PDF — <iframe>
+    if (fileUrl.endsWith('.pdf')) {
+        displayArea.innerHTML = `<iframe src="${fileUrl}#toolbar=0" frameborder="0"></iframe>`;
+    } else {
+        displayArea.innerHTML = `<img src="${fileUrl}" alt="Меню">`;
+    }
+}
+
+function backToCanteenSelection() {
+    document.getElementById('canteen-selection').style.display = 'grid';
+    document.getElementById('canteen-viewer').style.display = 'none';
 }
