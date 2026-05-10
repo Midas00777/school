@@ -71,6 +71,47 @@ if (isset($_FILES['files'])) {
         }
     }
 }
+// ... твой код загрузки файлов (который ты скинул) уже отработал ...
+
+$type = $_POST['type'] ?? '';
+$edit_index = isset($_POST['edit_index']) ? (int)$_POST['edit_index'] : -1;
+
+// Подготавливаем структуру для сохранения
+$newItem = [];
+
+if ($type === 'info' || $type === 'news') {
+    $newItem = [
+        'title' => $_POST['title'] ?? ($_POST['info_title'] ?? ''), // Поддержка старых и новых имен
+        'text' => $_POST['text'] ?? ($_POST['info_text'] ?? ''),
+        'date' => date('d.m.Y H:i')
+    ];
+
+    // Если файлы были загружены — сохраняем массив путей
+    if (!empty($uploadedFiles)) {
+        $newItem['images'] = $uploadedFiles;
+    } 
+    // Если мы редактируем и не загрузили НОВЫЕ фото, 
+    // нужно сохранить старые, иначе они пропадут
+    elseif ($edit_index !== -1) {
+        $currentData = json_decode(file_get_contents($type . '.json'), true);
+        if (isset($currentData[$edit_index]['images'])) {
+            $newItem['images'] = $currentData[$edit_index]['images'];
+        }
+    }
+}
+// ... твой код, который ты скинул ...
+
+$filename = $type . '.json';
+$currentData = json_decode(file_get_contents($filename), true) ?: [];
+
+if ($edit_index !== -1) {
+    $currentData[$edit_index] = $newItem; // Обновляем старую запись
+} else {
+    array_unshift($currentData, $newItem); // Добавляем новую в начало
+}
+
+file_put_contents($filename, json_encode($currentData, JSON_UNESCAPED_UNICODE));
+echo json_encode(['status' => 'success', 'message' => 'Данные сохранены']);
 
 // Если старый способ загрузки одного файла всё еще используется где-то (например, в Инфо)
 $singleFilePath = "";

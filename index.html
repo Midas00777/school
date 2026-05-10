@@ -41,38 +41,58 @@
             </section>
 
             <section id="navigation" class="content-section">
-                <div class="section-wrapper">
-                    <div class="section-title">
-                        <span class="material-icons-round">explore</span>
-                        <h2>Навигация и поиск кабинетов</h2>
+    <div class="section-wrapper">
+        <div class="section-title">
+            <span class="material-icons-round">explore</span>
+            <h2>Навигация и поиск кабинетов</h2>
+        </div>
+
+        <div class="navigation-controls">
+            <div class="map-type-selector">
+                <button class="type-btn active" onclick="setMapType('regular', this)">
+                    <span class="material-icons-round">map</span> Карта
+                </button>
+                <button class="type-btn" onclick="setMapType('evacuation', this)">
+                    <span class="material-icons-round">emergency</span> Эвакуация
+                </button>
+            </div>
+
+            <div class="floor-selector">
+                <button class="floor-btn active" onclick="loadFloor(1, this)">1</button>
+                <button class="floor-btn" onclick="loadFloor(2, this)">2</button>
+                <button class="floor-btn" onclick="loadFloor(3, this)">3</button>
+            </div>
+        </div>
+
+        <div class="nav-container">
+            <div class="search-column">
+                <div class="search-wrapper">
+                    <span class="material-icons-round">search</span>
+                    <input type="text" id="roomSearch" placeholder="Номер кабинета или фамилия..." oninput="filterRooms(this.value)">
+                </div>
+                <div id="nav-content" class="rooms-grid">
                     </div>
-                        <div class="map-type-selector" style="margin-bottom: 15px; display: flex; gap: 10px;">
-                            <button class="type-btn active" onclick="setMapType('regular', this)">Карта</button>
-                            <button class="type-btn" onclick="setMapType('evacuation', this)">Эвакуация</button>
-                        </div>
-                    <div class="floor-selector">
-                        <div class="floor-tabs">
-                            <button class="floor-btn active" onclick="loadFloor(1, this)">1 этаж</button>
-                            <button class="floor-btn" onclick="loadFloor(2, this)">2 этаж</button>
-                            <button class="floor-btn" onclick="loadFloor(3, this)">3 этаж</button>
-                        </div>
+            </div>
+
+            <div class="map-column">
+                <div id="svg-map-container" class="map-display">
                     </div>
 
-                    <div class="nav-container">
-                        <div class="search-column">
-                            <div class="search-wrapper">
-                                <span class="material-icons-round">search</span>
-                                <input type="text" id="roomSearch" placeholder="Номер кабинета или фамилия..." oninput="filterRooms(this.value)">
-                            </div>
-                            <div id="nav-content" class="rooms-grid"></div>
-                        </div>
-                        <div class="map-column">
-                           <div id="svg-map-container" class="map-display">                                
-                            </div>
-                        </div>
-                    </div>
+                <div class="zoom-controls">
+                    <button onclick="changeScale(0.2)" class="zoom-btn" title="Увеличить">
+                        <span class="material-icons-round">add</span>
+                    </button>
+                    <button onclick="changeScale(-0.2)" class="zoom-btn" title="Уменьшить">
+                        <span class="material-icons-round">remove</span>
+                    </button>
+                    <button onclick="resetZoom()" class="zoom-btn" title="Сбросить">
+                        <span class="material-icons-round">restart_alt</span>
+                    </button>
                 </div>
-            </section>
+            </div>
+        </div>
+    </div>
+</section>
 
           <section id="schedule" class="content-section">
     <div class="section-wrapper">

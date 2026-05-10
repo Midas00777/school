@@ -2,7 +2,13 @@
 // ==========================================
 let allRooms = [];
 let currentFloor = 1;
-let aboba = 100;
+let currentMapType = 'regular';
+let scale = 1;
+let evCache = []; 
+let prevDiff = -1; 
+let currentPos = { x: 0, y: 0 };
+let startPos = { x: 0, y: 0 };
+let isDragging = false; // Не забудь добавить эту строку, она важна
 
 // ==========================================
 // 2. УПРАВЛЕНИЕ СЕКЦИЯМИ И ВРЕМЕНЕМ
@@ -96,10 +102,31 @@ function updateDateTime() {
 // 3. НАВИГАЦИЯ И КАРТЫ
 // ==========================================
 
-async function loadFloor(floorNum, btn) {
-    // 1. Подсветка кнопки
-    document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
+
+
+function setMapType(type, btn) {
+    currentMapType = type;
+    
+    // Подсветка кнопок режима
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
+    
+    // Перезагружаем текущий этаж с новым типом
+    loadFloor(currentFloor);
+}
+
+async function loadFloor(floorNum, btn) {
+    currentFloor = floorNum; // Обновляем глобальную переменную
+    
+    // 1. Подсветка кнопок этажей
+    document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
+    if (btn) {
+        btn.classList.add('active');
+    } else {
+        // Если кнопка не передана (вызов из setMapType), ищем её в DOM
+        const floorBtns = document.querySelectorAll('.floor-btn');
+        if (floorBtns[floorNum - 1]) floorBtns[floorNum - 1].classList.add('active');
+    }
 
     const container = document.getElementById('svg-map-container');
     if (!container) return;
@@ -107,29 +134,39 @@ async function loadFloor(floorNum, btn) {
     container.innerHTML = '<div class="loading">Загрузка...</div>';
 
     try {
-        // Добавляем img/ к пути SVG
-        const svgResponse = await fetch(`img/${floorNum}Этаж.svg?v=${Date.now()}`);
-        
-        if (svgResponse.ok) {
-            container.innerHTML = await svgResponse.text();
+        let filePath;
+        if (currentMapType === 'evacuation') {
+            filePath = `img/${floorNum}evoFloor.png?v=${Date.now()}`;
         } else {
-            // Добавляем img/ к пути PNG
-            const pngPath = `img/${floorNum}Этаж.png?v=${Date.now()}`;
-            container.innerHTML = `
-                <img src="${pngPath}" 
-                     style="width: 100%; height: auto; border-radius: 12px; display: block;"
-                     onerror="this.style.display='none'; this.insertAdjacentHTML('afterend', '<div class=\'map-error\'>Карта не найдена</div>')">
-            `;
+            filePath = `img/${floorNum}Этаж.svg?v=${Date.now()}`;
+        }
+
+        const response = await fetch(filePath);
+        
+        if (response.ok) {
+            if (filePath.endsWith('.svg')) {
+                container.innerHTML = await response.text();
+            } else {
+                container.innerHTML = `<img src="${filePath}" style="width: 100%; height: auto; border-radius: 12px; display: block;">`;
+            }
+        } else {
+            // Если SVG не найден для обычной карты, пробуем PNG
+            if (currentMapType === 'regular') {
+                const pngPath = `img/${floorNum}Этаж.png?v=${Date.now()}`;
+                container.innerHTML = `<img src="${pngPath}" style="width: 100%; height: auto; border-radius: 12px; display: block;" onerror="this.parentElement.innerHTML='Карта не найдена'">`;
+            } else {
+                container.innerHTML = '<div class="map-error">План эвакуации не найден</div>';
+            }
         }
     } catch (e) {
-        container.innerHTML = `<div class="map-error">Ошибка загрузки</div>`;
+        container.innerHTML = '<div class="map-error">Ошибка связи с сервером</div>';
     }
 
-    if (typeof filterRoomsByFloor === "function") {
+    // Обновляем список кабинетов под этот этаж
+    if (currentMapType === 'regular') {
         filterRoomsByFloor(floorNum);
     }
 }
-
 // ==========================================
 // 4. ЗАГРУЗКА ДАННЫХ (НОВОСТИ, СТОЛОВАЯ, РАСПИСАНИЕ)
 // ==========================================
@@ -422,30 +459,46 @@ function renderInfoBlocks(infoData) {
     const container = document.getElementById('info-container');
     if (!container) return;
 
-    container.innerHTML = infoData.map(item => `
-        <div class="info-card">
-            <h3 style="
-                white-space: normal !important; 
-                overflow: visible !important; 
-                text-overflow: clip !important; 
-                display: block !important; 
-                height: auto !important; 
-                min-height: min-content !important;
-                text-align: center;
-            ">
-                <span class="material-icons-round" style="display: block; margin-bottom: 8px;">info</span> 
-                ${item.title}
-            </h3>
-            <div class="info-card-content">
-                <p>${item.text}</p>
+    container.innerHTML = infoData.map(item => {
+        // ЗАЩИТА: Если данных нет, подставляем пустую строку, чтобы replace не падал
+        const safeTitle = (item.title || "").replace(/"/g, '&quot;');
+        const safeText = (item.text || "").replace(/"/g, '&quot;');
+        
+        // Проверяем наличие картинок для вывода маленького значка "фото", если они есть
+        const hasImages = item.images && item.images.length > 0;
+        const photoBadge = hasImages ? `<span class="photo-badge"><span class="material-icons-round">image</span> ${item.images.length}</span>` : '';
+
+        return `
+            <div class="info-card">
+                <h3 style="
+                    white-space: normal !important; 
+                    overflow: visible !important; 
+                    text-overflow: clip !important; 
+                    display: block !important; 
+                    height: auto !important; 
+                    min-height: min-content !important;
+                    text-align: center;
+                    position: relative;
+                ">
+                    <span class="material-icons-round" style="display: block; margin-bottom: 8px;">info</span> 
+                    ${item.title || 'Без заголовка'}
+                    ${photoBadge}
+                </h3>
+                <div class="info-card-content">
+                    <p>${(item.text || 'Нет описания').substring(0, 100)}${item.text?.length > 100 ? '...' : ''}</p>
+                </div>
+                <button class="info-more-btn" 
+                        onclick="showInfoModal(${JSON.stringify(item).replace(/"/g, '&quot;')})"
+                        data-title="${safeTitle}" 
+                        data-text="${safeText}">
+                    Подробнее
+                </button>
             </div>
-            <button class="info-more-btn" 
-                    data-title="${item.title.replace(/"/g, '&quot;')}" 
-                    data-text="${item.text.replace(/"/g, '&quot;')}">
-                Подробнее
-            </button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
+
+    // После отрисовки вешаем события на кнопки, если ты не используешь onclick напрямую
+    initInfoModalEvents();
 }
 
 // 2. Глобальный обработчик клика (добавь это ОДИН РАЗ в начало или конец logic.js)
@@ -602,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (firstBtn) loadShift('1_smena', firstBtn);
     });
 });
-let currentMapType = 'regular'; // По умолчанию обычная карта
+
 
 function setMapType(type, btn) {
     currentMapType = type;
@@ -629,17 +682,13 @@ async function loadFloor(floorNum, btn) {
     container.innerHTML = '<div class="loading">Загрузка...</div>';
 
     try {
-        // ОПРЕДЕЛЯЕМ ПУТЬ К ФАЙЛУ
         let filePath;
         if (currentMapType === 'evacuation') {
-            // Если режим эвакуации — берем PNG (напр. 1evoFloor.png)
             filePath = `img/${floorNum}evoFloor.png?v=${Date.now()}`;
         } else {
-            // Если обычный режим — сначала ищем SVG, потом PNG
             filePath = `img/${floorNum}Этаж.svg?v=${Date.now()}`;
         }
 
-        // Пытаемся загрузить
         const response = await fetch(filePath);
         
         if (response.ok) {
@@ -648,10 +697,22 @@ async function loadFloor(floorNum, btn) {
             } else {
                 container.innerHTML = `<img src="${filePath}" style="width: 100%; height: auto; border-radius: 12px; display: block;">`;
             }
+            
+            // ВЫЗОВ ЗУМА И СБРОСА (для SVG или первого PNG)
+            setTimeout(() => {
+                initTouchZoom();
+                resetZoom();
+            }, 100);
+
         } else if (currentMapType === 'regular') {
-            // Резервный вариант для обычной карты (если SVG нет, ищем PNG)
             const pngPath = `img/${floorNum}Этаж.png?v=${Date.now()}`;
             container.innerHTML = `<img src="${pngPath}" style="width: 100%; height: auto; border-radius: 12px; display: block;" onerror="this.parentElement.innerHTML='Карта не найдена'">`;
+            
+            // ВЫЗОВ ЗУМА И СБРОСА (для резервного PNG)
+            setTimeout(() => {
+                initTouchZoom();
+                resetZoom();
+            }, 100);
         } else {
             container.innerHTML = `<div class="map-error">План эвакуации не найден</div>`;
         }
@@ -659,8 +720,110 @@ async function loadFloor(floorNum, btn) {
         container.innerHTML = `<div class="map-error">Ошибка связи с сервером</div>`;
     }
 
-    // 3. Обновляем список кабинетов (только для обычной карты)
     if (currentMapType === 'regular') {
         filterRoomsByFloor(floorNum);
     }
+}
+
+// Функция для кнопок + и -
+function changeScale(delta) {
+    const img = document.querySelector('#svg-map-container img') || 
+                document.querySelector('#svg-map-container svg');
+    if (!img) return;
+
+    // Изменяем масштаб в пределах от 1 до 4
+    scale = Math.min(Math.max(1, scale + delta), 4);
+    
+    // Если возвращаемся к масштабу 1, центрируем карту
+    if (scale === 1) {
+        currentPos = { x: 0, y: 0 };
+    }
+
+    updateTransform(img);
+}
+
+// Функция сброса
+function resetZoom() {
+    const img = document.querySelector('#svg-map-container img') || 
+                document.querySelector('#svg-map-container svg');
+    if (!img) return;
+
+    scale = 1;
+    currentPos = { x: 0, y: 0 };
+    updateTransform(img);
+}
+
+function initTouchZoom() {
+    const el = document.getElementById('svg-map-container');
+    if (!el) return;
+
+    const img = el.querySelector('img') || el.querySelector('svg');
+    if (!img) return;
+
+    // Сброс при новой загрузке
+    scale = 1;
+    currentPos = { x: 0, y: 0 };
+    img.style.transform = `translate(0px, 0px) scale(1)`;
+
+    el.onpointerdown = (e) => {
+        evCache.push(e);
+        isDragging = true;
+        startPos = { x: e.clientX - currentPos.x, y: e.clientY - currentPos.y };
+    };
+
+    el.onpointermove = (e) => {
+        // Находим это касание в кэше и обновляем его координаты
+        const index = evCache.findIndex((ev) => ev.pointerId === e.pointerId);
+        evCache[index] = e;
+
+        // Если касания два — это ЩИПОК (Zoom)
+        if (evCache.length === 2) {
+            const curDiff = Math.hypot(evCache[0].clientX - evCache[1].clientX, evCache[0].clientY - evCache[1].clientY);
+
+            if (prevDiff > 0) {
+                if (curDiff > prevDiff) scale += 0.05;
+                if (curDiff < prevDiff) scale -= 0.05;
+                scale = Math.min(Math.max(1, scale), 4); // Ограничение зума
+            }
+            prevDiff = curDiff;
+        } 
+        // Если касание одно — это ПЕРЕМЕЩЕНИЕ (Drag)
+        else if (evCache.length === 1 && isDragging) {
+            currentPos.x = e.clientX - startPos.x;
+            currentPos.y = e.clientY - startPos.y;
+        }
+        
+        updateTransform(img);
+    };
+
+    el.onpointerup = el.onpointerleave = (e) => {
+        evCache = evCache.filter((ev) => ev.pointerId !== e.pointerId);
+        if (evCache.length < 2) prevDiff = -1;
+        if (evCache.length === 0) isDragging = false;
+    };
+}
+
+function updateTransform(element) {
+    element.style.transform = `translate(${currentPos.x}px, ${currentPos.y}px) scale(${scale})`;
+}
+async function editItem(type, index) {
+    const files = { news: 'news.json', info: 'info.json', room: 'rooms.json' };
+    const res = await fetch(files[type] + '?v=' + Date.now());
+    const data = await res.json();
+    const item = data[index];
+
+    if (type === 'info') {
+        const form = document.getElementById('infoForm');
+        form.querySelector('[name="edit_index"]').value = index;
+        form.querySelector('[name="title"]').value = item.title;
+        form.querySelector('[name="text"]').value = item.text;
+        document.getElementById('info_submit_btn').innerText = "Сохранить изменения";
+    } else if (type === 'news') {
+        const form = document.getElementById('newsForm');
+        form.querySelector('[name="edit_index"]').value = index;
+        form.querySelector('[name="title"]').value = item.title;
+        form.querySelector('[name="text"]').value = item.text;
+        form.querySelector('button[type="submit"]').innerText = "Сохранить новость";
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }

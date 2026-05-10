@@ -1246,3 +1246,118 @@ body {
     background: #2563eb;
     color: white;
 }
+/* Контейнер управления */
+.navigation-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+/* Переключатель типа (Карта/Эвакуация) */
+.map-type-selector {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.type-btn {
+    flex: 1; /* Кнопки делят место поровну */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 10px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.type-btn.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+/* Сетка кнопок этажей */
+.floor-selector {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    gap: 10px;
+}
+
+.floor-btn {
+    padding: 15px;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    /* ... твои текущие стили для floor-btn ... */
+}
+
+/* Адаптация под Киоск (большой экран) */
+@media (min-width: 1200px) {
+    .navigation-controls {
+        padding: 20px;
+    }
+    .type-btn {
+        padding: 20px;
+        font-size: 1.1rem;
+    }
+}
+/* Контейнер, который ограничивает видимость карты при зуме */
+.map-display {
+    position: relative;
+    overflow: hidden;
+    touch-action: none; /* Критично для сенсорных экранов! */
+    background: #f1f5f9;
+    border-radius: 12px;
+}
+
+#svg-map-container img, #svg-map-container svg {
+    transition: transform 0.1s ease-out;
+    transform-origin: center; /* Зум в центр для удобства на тач-экране */
+    will-change: transform;
+}
+.map-column {
+    position: relative;
+    min-height: 400px; /* Чтобы колонка не схлопывалась при загрузке */
+}
+
+.zoom-controls {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100; /* Кнопки всегда сверху */
+}
+
+.zoom-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #2563eb;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zoom-btn:active {
+    transform: scale(0.9);
+    background: #f8fafc;
+}
+
+.zoom-btn span {
+    font-size: 32px;
+}
