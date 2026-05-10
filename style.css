@@ -1233,3 +1233,16 @@ body {
     width: 25px; /* Активная точка длиннее */
     border-radius: 5px; 
 }
+.type-btn {
+    padding: 8px 16px;
+    border: 1px solid #2563eb;
+    background: white;
+    color: #2563eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+.type-btn.active {
+    background: #2563eb;
+    color: white;
+}

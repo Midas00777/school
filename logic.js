@@ -602,3 +602,65 @@ document.addEventListener('DOMContentLoaded', () => {
         if (firstBtn) loadShift('1_smena', firstBtn);
     });
 });
+let currentMapType = 'regular'; // По умолчанию обычная карта
+
+function setMapType(type, btn) {
+    currentMapType = type;
+    // Подсветка кнопок режима
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    
+    // Перезагружаем текущий этаж с новым типом карты
+    loadFloor(currentFloor); 
+}
+
+async function loadFloor(floorNum, btn) {
+    currentFloor = floorNum; // Сохраняем текущий этаж
+    
+    // 1. Подсветка кнопки этажа
+    if (btn) {
+        document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    const container = document.getElementById('svg-map-container');
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading">Загрузка...</div>';
+
+    try {
+        // ОПРЕДЕЛЯЕМ ПУТЬ К ФАЙЛУ
+        let filePath;
+        if (currentMapType === 'evacuation') {
+            // Если режим эвакуации — берем PNG (напр. 1evoFloor.png)
+            filePath = `img/${floorNum}evoFloor.png?v=${Date.now()}`;
+        } else {
+            // Если обычный режим — сначала ищем SVG, потом PNG
+            filePath = `img/${floorNum}Этаж.svg?v=${Date.now()}`;
+        }
+
+        // Пытаемся загрузить
+        const response = await fetch(filePath);
+        
+        if (response.ok) {
+            if (filePath.endsWith('.svg')) {
+                container.innerHTML = await response.text();
+            } else {
+                container.innerHTML = `<img src="${filePath}" style="width: 100%; height: auto; border-radius: 12px; display: block;">`;
+            }
+        } else if (currentMapType === 'regular') {
+            // Резервный вариант для обычной карты (если SVG нет, ищем PNG)
+            const pngPath = `img/${floorNum}Этаж.png?v=${Date.now()}`;
+            container.innerHTML = `<img src="${pngPath}" style="width: 100%; height: auto; border-radius: 12px; display: block;" onerror="this.parentElement.innerHTML='Карта не найдена'">`;
+        } else {
+            container.innerHTML = `<div class="map-error">План эвакуации не найден</div>`;
+        }
+    } catch (e) {
+        container.innerHTML = `<div class="map-error">Ошибка связи с сервером</div>`;
+    }
+
+    // 3. Обновляем список кабинетов (только для обычной карты)
+    if (currentMapType === 'regular') {
+        filterRoomsByFloor(floorNum);
+    }
+}

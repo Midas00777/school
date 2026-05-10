@@ -46,7 +46,10 @@
                         <span class="material-icons-round">explore</span>
                         <h2>Навигация и поиск кабинетов</h2>
                     </div>
-
+                        <div class="map-type-selector" style="margin-bottom: 15px; display: flex; gap: 10px;">
+                            <button class="type-btn active" onclick="setMapType('regular', this)">Карта</button>
+                            <button class="type-btn" onclick="setMapType('evacuation', this)">Эвакуация</button>
+                        </div>
                     <div class="floor-selector">
                         <div class="floor-tabs">
                             <button class="floor-btn active" onclick="loadFloor(1, this)">1 этаж</button>
