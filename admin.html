@@ -36,6 +36,60 @@
     display: flex;
     align-items: center;
 }
+/* Контейнер элемента списка */
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    gap: 15px; /* Зазор между текстом и кнопками */
+}
+
+/* Блок с текстом */
+.data-list-info {
+    flex: 1; /* Занимает все свободное место */
+    min-width: 0; /* Важно: позволяет тексту обрезаться, а не распирать флекс */
+}
+
+.data-list-info strong {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Три точки для длинных заголовков */
+    color: #1e293b;
+}
+
+.data-list-info p {
+    margin: 4px 0 0 0;
+    font-size: 0.85em;
+    color: #64748b;
+    /* Ограничение в 1-2 строки */
+    display: -webkit-box;
+    -webkit-line-clamp: 1; 
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Блок с кнопками */
+.actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0; /* Запрещает кнопкам уменьшаться или улетать */
+}
+
+.edit-btn, .del-btn {
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
     </style>
 </head>
 <body>
@@ -74,20 +128,28 @@
     </div>
 
   <div id="tab-info" class="tab-content" style="display:none">
-    <form id="infoForm">
+    <form id="infoForm" enctype="multipart/form-data">
         <input type="hidden" name="type" value="info">
         <input type="hidden" name="edit_index" id="info_edit_index" value="-1">
         
-        <input type="text" name="title" id="info_field_title" placeholder="Заголовок" required>
-        <textarea name="text" id="info_field_text" placeholder="Основной текст" rows="3" required></textarea>
+        <div class="input-group">
+            <input type="text" name="title" id="info_field_title" placeholder="Заголовок" required>
+        </div>
         
-        <input type="file" name="files[]" accept="image/*" multiple>
-        <small style="color: #64748b; display: block; margin-top: 5px;">
-            Можно выбрать несколько фото для слайдера
-        </small>
+        <div class="input-group">
+            <textarea name="text" id="info_field_text" placeholder="Текст информации" required></textarea>
+        </div>
         
-        <button type="submit" id="info_submit_btn">Добавить карточку инфо</button>
+        <label class="file-input-label">
+            <span class="material-icons-round">image</span>
+            Выберите фотографии (можно несколько)
+            <input type="file" name="files[]" multiple accept="image/*">
+        </label>
+        
+        <button type="submit" id="info_submit_btn">Добавить инфо</button>
+        <button type="button" class="cancel-btn" onclick="resetInfoForm()" style="display:none;" id="info_cancel_btn">Отмена</button>
     </form>
+    
     <div id="list-info"></div>
 </div>
 
@@ -154,6 +216,13 @@
 </div>
 
 <script>
+    function resetInfoForm() {
+    const form = document.getElementById('infoForm');
+    form.reset();
+    document.getElementById('info_edit_index').value = "-1";
+    document.getElementById('info_submit_btn').innerText = "Добавить инфо";
+    document.getElementById('info_cancel_btn').style.display = "none";
+}
     // --- ПЕРЕКЛЮЧЕНИЕ ТАБОВ ---
     function switchTab(tab) {
         document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
@@ -205,57 +274,87 @@
     });
 
     // --- ЗАГРУЗКА СПИСКОВ ---
-    async function loadDataList(type) {
-        const containerMap = {
-            'news': 'list-news', 'room': 'list-rooms', 'canteen': 'list-canteen',
-            'info': 'list-info', 'schedule': 'list-schedule'
-        };
-        const files = { 
-            news: 'news.json', room: 'rooms.json', canteen: 'canteen.json', 
-            info: 'info.json', schedule: 'schedule.json' 
-        };
+    // --- ЗАГРУЗКА СПИСКОВ ДАННЫХ В АДМИНКЕ ---
+async function loadDataList(type) {
+    const containerMap = {
+        'news': 'list-news', 
+        'room': 'list-rooms', 
+        'canteen': 'list-canteen',
+        'info': 'list-info', 
+        'schedule': 'list-schedule'
+    };
+    
+    const files = { 
+        news: 'news.json', 
+        room: 'rooms.json', 
+        canteen: 'canteen.json', 
+        info: 'info.json', 
+        schedule: 'schedule.json' 
+    };
 
-        const container = document.getElementById(containerMap[type]);
-        if (!container) return;
+    const container = document.getElementById(containerMap[type]);
+    if (!container) return;
 
-        try {
-            const res = await fetch(files[type] + '?v=' + Date.now());
-            const data = await res.json();
-            container.innerHTML = '<h4 style="margin: 20px 0 10px;">Текущие данные:</h4>';
+    try {
+        const res = await fetch(files[type] + '?v=' + Date.now());
+        const data = await res.json();
+        
+        // Заголовок списка
+        container.innerHTML = '<h4 style="margin: 20px 0 10px; color: #1e293b;">Текущие данные:</h4>';
 
-            if (!data || data.length === 0) {
-                container.innerHTML += '<p>Список пуст</p>';
-                return;
-            }
-
-            data.forEach((item, index) => {
-                if (type === 'canteen') {
-                    container.innerHTML += `
-                        <div style="border: 1px solid #eee; padding: 10px; margin-bottom: 5px; border-radius: 8px;">
-                            <strong>${item.category}</strong>
-                            ${item.items.map((dish, dIdx) => `
-                                <div class="list-item">
-                                    <span>${dish.name}</span>
-                                    <button class="del-btn" onclick="deleteCanteenItem(${index}, ${dIdx})"><span class="material-icons-round">delete</span></button>
-                                </div>
-                            `).join('')}
-                        </div>`;
-                } else {
-                    const title = item.title || item.info_title || item.name || item.subject || (item.id ? 'Каб. ' + item.id : 'Запись ' + index);
-                    container.innerHTML += `
-                        <div class="list-item">
-                            <span>${title}</span>
-                            <div class="actions">
-                                <button class="edit-btn" onclick="editItem('${type}', ${index})"><span class="material-icons-round">edit</span></button>
-                                <button class="del-btn" onclick="deleteItem('${type}', ${index})"><span class="material-icons-round">delete</span></button>
-                            </div>
-                        </div>`;
-                }
-            });
-        } catch (e) {
-            container.innerHTML = '<p>Данных нет</p>';
+        if (!data || data.length === 0) {
+            container.innerHTML += '<p style="color: #64748b; font-style: italic;">Список пока пуст...</p>';
+            return;
         }
+
+        data.forEach((item, index) => {
+            // Отдельная логика для столовой (так как там вложенные массивы блюд)
+            if (type === 'canteen') {
+                container.innerHTML += `
+                    <div style="border: 1px solid #e2e8f0; padding: 15px; margin-bottom: 10px; border-radius: 12px; background: #fff;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="color: var(--primary);">${item.category}</strong>
+                        </div>
+                        ${item.items.map((dish, dIdx) => `
+                            <div class="list-item" style="margin-bottom: 5px; background: #f8fafc; padding: 8px 12px;">
+                                <span style="font-size: 0.9em;">${dish.name}</span>
+                                <button class="del-btn" onclick="deleteCanteenItem(${index}, ${dIdx})" title="Удалить блюдо">
+                                    <span class="material-icons-round" style="font-size: 18px;">delete</span>
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>`;
+            } 
+            // Универсальная логика для всех остальных типов (Новости, Инфо, Кабинеты)
+            else {
+                // Определяем заголовок в зависимости от того, какие поля есть в объекте
+                const title = item.title || item.info_title || item.name || item.subject || (item.id ? 'Каб. ' + item.id : 'Запись №' + (index + 1));
+                
+                // Определяем подзаголовок (текст), чтобы показать превью
+                const subtitle = item.text || item.info_text || item.teacher || (item.time ? item.time + ' | Каб: ' + item.room : "");
+
+                container.innerHTML += `
+                    <div class="list-item">
+                        <div class="data-list-info">
+                            <strong>${title}</strong>
+                            ${subtitle ? `<p>${subtitle}</p>` : ''}
+                        </div>
+                        <div class="actions">
+                            <button class="edit-btn" onclick="editItem('${type}', ${index})" title="Редактировать">
+                                <span class="material-icons-round">edit</span>
+                            </button>
+                            <button class="del-btn" onclick="deleteItem('${type}', ${index})" title="Удалить">
+                                <span class="material-icons-round">delete</span>
+                            </button>
+                        </div>
+                    </div>`;
+            }
+        });
+    } catch (e) {
+        console.error("Ошибка при загрузке списка " + type + ":", e);
+        container.innerHTML = '<p style="color: #ef4444;">Ошибка загрузки данных. Проверьте JSON файл.</p>';
     }
+}
 
     // --- УДАЛЕНИЕ ---
     async function deleteItem(type, index) {

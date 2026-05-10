@@ -438,67 +438,112 @@ async function loadDataList(type) {
     } catch (e) { container.innerHTML = '<p>Данных пока нет</p>'; }
 }
 async function loadInfo() {
-    const container = document.getElementById('info-container');
-    if (!container) return;
-
     try {
-        const response = await fetch('info.json?v=' + Date.now());
-        const data = await response.json();
-
-        // Вместо старого мапа вызываем новую правильную функцию отрисовки
-        renderInfoBlocks(data);
-        
+        const res = await fetch('info.json?v=' + Date.now());
+        const data = await res.json();
+        renderInfo(data); // <--- Используем правильное имя функции
     } catch (e) {
         console.error("Ошибка загрузки инфо:", e);
-        container.innerHTML = '<p>Информация обновляется...</p>';
     }
 }
 // Функция для отрисовки блоков (вызывай её при загрузке данных инфо)
 // 1. Функция отрисовки (вызывается после получения данных из админки)
-function renderInfoBlocks(infoData) {
+// Функция отрисовки карточек
+// Функция отрисовки карточек Инфо
+function renderInfo(data) {
     const container = document.getElementById('info-container');
     if (!container) return;
+    container.innerHTML = '';
 
-    container.innerHTML = infoData.map(item => {
-        // ЗАЩИТА: Если данных нет, подставляем пустую строку, чтобы replace не падал
-        const safeTitle = (item.title || "").replace(/"/g, '&quot;');
-        const safeText = (item.text || "").replace(/"/g, '&quot;');
+    data.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'info-card';
         
-        // Проверяем наличие картинок для вывода маленького значка "фото", если они есть
-        const hasImages = item.images && item.images.length > 0;
-        const photoBadge = hasImages ? `<span class="photo-badge"><span class="material-icons-round">image</span> ${item.images.length}</span>` : '';
+        // Берем первое фото из массива images
+        const firstImg = (item.images && item.images.length > 0) ? item.images[0] : 'img/default-info.png';
 
-        return `
-            <div class="info-card">
-                <h3 style="
-                    white-space: normal !important; 
-                    overflow: visible !important; 
-                    text-overflow: clip !important; 
-                    display: block !important; 
-                    height: auto !important; 
-                    min-height: min-content !important;
-                    text-align: center;
-                    position: relative;
-                ">
-                    <span class="material-icons-round" style="display: block; margin-bottom: 8px;">info</span> 
-                    ${item.title || 'Без заголовка'}
-                    ${photoBadge}
-                </h3>
-                <div class="info-card-content">
-                    <p>${(item.text || 'Нет описания').substring(0, 100)}${item.text?.length > 100 ? '...' : ''}</p>
-                </div>
-                <button class="info-more-btn" 
-                        onclick="showInfoModal(${JSON.stringify(item).replace(/"/g, '&quot;')})"
-                        data-title="${safeTitle}" 
-                        data-text="${safeText}">
+        card.innerHTML = `
+            <img src="${firstImg}" alt="">
+            <div class="info-card-content">
+                <h3>${item.title || ""}</h3>
+                <p>${(item.text || "").substring(0, 100)}...</p>
+                <button class="read-more" onclick="showFullInfo(${index})">
+                    <span class="material-icons-round">visibility</span>
                     Подробнее
                 </button>
             </div>
         `;
-    }).join('');
+        container.appendChild(card);
+    });
+}
 
-    // После отрисовки вешаем события на кнопки, если ты не используешь onclick напрямую
-    initInfoModalEvents();
+// Функция открытия модального окна для Инфо (Универсальная)
+async function showFullInfo(index) {
+    try {
+        const res = await fetch('info.json?v=' + Date.now());
+        const data = await res.json();
+        const item = data[index];
+
+        if (!item) return;
+
+        const modal = document.getElementById('news-modal');
+        const modalBody = document.getElementById('modal-body');
+        
+        // Сбрасываем индекс слайда
+        currentSlide = 0;
+
+        // Формируем контент (Слайдер + Текст)
+        let imagesHtml = '';
+        if (item.images && item.images.length > 0) {
+            imagesHtml = `
+                <div class="modal-slider">
+                    <div class="slider-track" id="sliderTrack">
+                        ${item.images.map(img => `<img src="${img}" alt="">`).join('')}
+                    </div>
+                    
+                    ${item.images.length > 1 ? `
+                        <button class="slider-btn prev" onclick="moveSlide(-1)" aria-label="Назад">&#10094;</button>
+                        <button class="slider-btn next" onclick="moveSlide(1)" aria-label="Вперед">&#10095;</button>
+                        
+                        <div class="slider-dots">
+                            ${item.images.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" onclick="setSlide(${i})"></span>`).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        modalBody.innerHTML = `
+            ${imagesHtml}
+            <div class="modal-text-content">
+                <div class="modal-date">${item.date || ''}</div>
+                <h2>${item.title || ""}</h2>
+                <div class="full-text">${item.text || ""}</div>
+            </div>
+        `;
+
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden'; // Блокируем скролл фона
+
+        // Инициализируем слайдер, если картинок больше одной
+        if (item.images && item.images.length > 1) {
+            updateSliderDisplay(); 
+        }
+
+    } catch (e) {
+        console.error("Ошибка открытия инфо:", e);
+    }
+}
+
+function openFullInfo(title, text, images) {
+    const modalBody = document.getElementById('modal-body');
+    modalBody.innerHTML = `
+        ${createSliderHtml(images)}
+        <div style="padding:20px;">
+            <h2 style="color:var(--primary)">${title}</h2>
+            <p style="white-space:pre-wrap; font-size:18px;">${text}</p>
+        </div>`;
+    document.getElementById('news-modal').style.display = 'flex';
 }
 
 // 2. Глобальный обработчик клика (добавь это ОДИН РАЗ в начало или конец logic.js)
@@ -514,18 +559,21 @@ document.addEventListener('click', function(event) {
 });
 
 // 3. Функция показа модалки
-function showFullInfoModal(title, text) {
-    const modal = document.getElementById('news-modal'); // Используем твою существующую модалку
+function showFullInfoModal(title, text, images) {
+    const modal = document.getElementById('news-modal');
     const modalBody = document.getElementById('modal-body');
 
     if (modal && modalBody) {
+        currentSlide = 0; // Сбрасываем слайдер на начало
+
         modalBody.innerHTML = `
-            <h2 style="color: var(--primary); margin-bottom: 15px;">${title}</h2>
-            <div style="font-size: 18px; line-height: 1.6; white-space: pre-wrap;">${text}</div>
+            <div style="padding: 20px;">
+                ${createSliderHtml(images)}
+                <h2 style="color: var(--primary); margin: 20px 0 15px;">${title}</h2>
+                <div style="font-size: 18px; line-height: 1.6; white-space: pre-wrap;">${text}</div>
+            </div>
         `;
         modal.style.display = 'flex';
-    } else {
-        console.error("Ошибка: Модальное окно или его тело не найдены!");
     }
 }
 
