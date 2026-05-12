@@ -19,12 +19,62 @@
     font-family: 'Inter', sans-serif;
 }
 
+/* В самом начале файла или там где селектор body */
 body {
     min-height: 100vh;
     background-color: var(--bg-color);
     color: var(--text-main);
     overflow-x: hidden;
-    overflow-y: auto;
+    /* Удали отсюда фиксированный overflow-y, если он есть, пусть будет по умолчанию */
+}
+
+/* Основной контейнер модалки (черный фон) */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Чуть плотнее фон */
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    overflow: hidden; /* ЗАПРЕЩАЕМ скролл здесь (убирает первый бегунок) */
+}
+
+/* Белое окошко с контентом */
+.modal-content {
+    background: var(--white);
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh; /* Ограничиваем высоту окна */
+    border-radius: 24px;
+    position: relative;
+    display: flex;
+    flex-direction: column; /* Картинка сверху, текст снизу */
+    overflow-y: auto; /* РАЗРЕШАЕМ скролл только здесь (остается один бегунок) */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Тонкий красивый скроллбар (только для Chrome/Edge/Safari) */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 0 24px 24px 0;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #999;
 }
 
 .app-container {
@@ -1847,4 +1897,34 @@ body.modal-open {
     max-height: 65vh;
     display: flex;
     align-items: center;
+}
+html, body {
+    /* Это обеспечит плавный возврат скролла и уберет возможные подергивания */
+    height: auto;
+    min-height: 100%;
+}
+
+/* Если ты используешь класс для активной модалки (опционально) */
+body.modal-open {
+    overflow: hidden;
+}
+/* Класс для блокировки скролла */
+body.no-scroll {
+    overflow: hidden !important;
+    height: 100vh !important;
+    width: 100% !important;
+    position: fixed !important; /* Гарантированная блокировка на мобильных */
+}
+/* Специальный класс для блокировки скролла */
+.no-scroll {
+    overflow: hidden !important;
+    height: 100vh !important;
+    width: 100% !important;
+    position: fixed !important; /* Это останавливает скролл намертво */
+    left: 0;
+    top: 0;
+}
+.content-viewport {
+    overflow-y: auto !important; /* Убедимся, что по умолчанию скролл есть */
+    -webkit-overflow-scrolling: touch; /* Для плавности на мобильных */
 }
