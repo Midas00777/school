@@ -70,28 +70,7 @@ function setSlide(index) {
 }
 
 // Вспомогательная функция для генерации HTML слайдера
-function createSliderHtml(images) {
-    const imgsArray = (Array.isArray(images) ? images : [images]).filter(img => typeof img === 'string' && !img.endsWith('.txt'));
-    
-    if (imgsArray.length === 0) return '<img src="https://placehold.co/600x400?text=Нет+фото" class="modal-main-img">';
 
-    const slides = imgsArray.map(src => 
-        `<div class="slide-item">
-            <img src="${src}" style="max-width:100%; max-height:65vh; object-fit:contain; display:block; margin:0 auto;" 
-                 onerror="this.src='https://placehold.co/600x400?text=Ошибка'">
-        </div>`
-    ).join('');
-
-    if (imgsArray.length === 1) return `<div class="single-img-wrap">${slides}</div>`;
-
-    return `
-        <div class="news-slider" style="position:relative; background:#000; overflow:hidden;">
-            <div class="slider-track" id="sliderTrack" style="display:flex; transition: 0.3s;">${slides}</div>
-            <button onclick="moveSlide(-1)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); z-index:10;">❮</button>
-            <button onclick="moveSlide(1)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); z-index:10;">❯</button>
-        </div>
-    `;
-}
 function openSection(sectionId, clickedButton) {
     document.body.style.overflow = 'auto';
 
@@ -216,36 +195,41 @@ async function loadNews() {
         const response = await fetch('news.json?v=' + Date.now());
         const news = await response.json();
         
+        console.log("Загруженные новости:", news);
+
         container.innerHTML = news.map((item, index) => {
+            // 1. Ищем путь к картинке (универсальный поиск)
             let previewImg = '';
             if (item.images && item.images.length > 0) previewImg = item.images[0];
             else if (item.files && item.files.length > 0) previewImg = item.files[0];
             else if (item.file) previewImg = item.file;
 
+            // 2. Если это не картинка или путь пустой — ставим заглушку
             if (!previewImg || typeof previewImg !== 'string' || previewImg.endsWith('.txt')) {
                 previewImg = 'https://placehold.co/600x400?text=Нет+фото';
             }
 
             return `
                 <div class="news-card" onclick="openNewsModal(${index})">
-                    <div class="news-media-container" style="width: 100%; height: 200px; overflow: hidden; background: #eee;">
-                        <img src="${previewImg}" style="width: 100%; height: 100%; object-fit: cover;" 
+                    <div class="news-media-container" style="width: 100%; height: 200px; overflow: hidden; border-radius: 12px 12px 0 0; background: #eee;">
+                        <img src="${previewImg}" class="news-img" 
+                             style="width: 100%; height: 100%; object-fit: cover;"
                              onerror="this.src='https://placehold.co/600x400?text=Ошибка+пути'">
                     </div>
                     <div class="news-content">
                         <span class="news-date">${item.date || ''}</span>
                         <h3>${item.title || 'Новость'}</h3>
-                        <p>${item.text ? item.text.substring(0, 80) + '...' : ''}</p> 
+                        <p>${item.text ? item.text.substring(0, 100) + '...' : ''}</p> 
                     </div>
-                </div>`;
+                </div>
+            `;
         }).join('');
 
         window.currentNews = news; 
     } catch (e) {
-        console.error("Критическая ошибка загрузки новостей:", e);
+        console.error("Ошибка загрузки новостей:", e);
     }
 }
-
 // 2. Открытие модалки с фиксом скролла
 function openNewsModal(index) {
     const newsItem = window.currentNews[index];
@@ -254,29 +238,60 @@ function openNewsModal(index) {
 
     if (!modal || !newsItem) return;
 
+    // Собираем все картинки для слайдера
     let allImages = [];
     if (newsItem.images) allImages = newsItem.images;
     else if (newsItem.files) allImages = newsItem.files;
     else if (newsItem.file) allImages = [newsItem.file];
 
+    // Генерируем контент
     body.innerHTML = `
         ${createSliderHtml(allImages)}
         <div style="padding: 20px;">
             <span class="news-date">${newsItem.date || ''}</span>
-            <h2 style="margin: 15px 0;">${newsItem.title || ''}</h2>
-            <div style="font-size: 16px; line-height: 1.5; white-space: pre-wrap;">${newsItem.text || ''}</div>
+            <h2 style="margin: 15px 0; color: var(--primary);">${newsItem.title || ''}</h2>
+            <div class="modal-body-text" style="font-size: 18px; line-height: 1.6; white-space: pre-wrap;">${newsItem.text || ''}</div>
         </div>
     `;
 
     modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // Блокируем скролл
+    document.body.style.overflow = 'hidden'; // Запрещаем скролл сайта
 }
 
-// 3. Закрытие модалки (исправляет зависание скролла)
+// ВАЖНО: Исправленная функция закрытия
 function closeNewsModal() {
     const modal = document.getElementById('news-modal');
     if (modal) modal.style.display = 'none';
-    document.body.style.overflow = ''; // Возвращаем скролл (пустая строка вернет дефолт)
+    document.body.style.overflow = ''; // Возвращаем скролл сайта!
+}
+
+function createSliderHtml(images) {
+    // Оставляем только строки, которые не .txt
+    const imgsArray = (Array.isArray(images) ? images : [images])
+                      .filter(img => typeof img === 'string' && !img.endsWith('.txt'));
+
+    if (imgsArray.length === 0) {
+        return '<img src="https://placehold.co/600x400?text=Нет+фото" class="modal-main-img" style="width:100%; max-height:60vh; object-fit:contain;">';
+    }
+
+    const slides = imgsArray.map(src => `
+        <div class="slide-item" style="min-width: 100%; display: flex; justify-content: center; background: #000;">
+            <img src="${src}" style="max-width: 100%; max-height: 65vh; object-fit: contain;" onerror="this.src='https://placehold.co/600x400?text=Ошибка'">
+        </div>
+    `).join('');
+
+    if (imgsArray.length === 1) return `<div class="single-image-wrap">${slides}</div>`;
+
+    // Если картинок много, добавляем структуру слайдера
+    return `
+        <div class="news-slider" style="position:relative; overflow:hidden;">
+            <div class="slider-track" id="sliderTrack" style="display:flex; transition: transform 0.3s ease;">
+                ${slides}
+            </div>
+            <button class="slider-btn" onclick="moveSlide(-1)" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); background: rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer;">❮</button>
+            <button class="slider-btn" onclick="moveSlide(1)" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); background: rgba(0,0,0,0.5); color:white; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer;">❯</button>
+        </div>
+    `;
 }
 
 async function loadCanteen() {
