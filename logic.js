@@ -556,11 +556,10 @@ async function showFullInfo(index) {
 
         const modal = document.getElementById('news-modal');
         const modalBody = document.getElementById('modal-body');
+        const viewport = document.querySelector('.content-viewport'); // Добавляем поиск вьюпорта
         
-        // Сбрасываем индекс слайда
         currentSlide = 0;
 
-        // Формируем контент (Слайдер + Текст)
         let imagesHtml = '';
         if (item.images && item.images.length > 0) {
             imagesHtml = `
@@ -568,11 +567,9 @@ async function showFullInfo(index) {
                     <div class="slider-track" id="sliderTrack">
                         ${item.images.map(img => `<img src="${img}" alt="">`).join('')}
                     </div>
-                    
                     ${item.images.length > 1 ? `
                         <button class="slider-btn prev" onclick="moveSlide(-1)" aria-label="Назад">&#10094;</button>
                         <button class="slider-btn next" onclick="moveSlide(1)" aria-label="Вперед">&#10095;</button>
-                        
                         <div class="slider-dots">
                             ${item.images.map((_, i) => `<span class="dot ${i === 0 ? 'active' : ''}" onclick="setSlide(${i})"></span>`).join('')}
                         </div>
@@ -591,9 +588,18 @@ async function showFullInfo(index) {
         `;
 
         modal.style.display = 'block';
-        document.body.style.overflow = 'hidden'; // Блокируем скролл фона
 
-        // Инициализируем слайдер, если картинок больше одной
+        // --- ФИКСЫ СКРОЛЛА ---
+        if (viewport) {
+            viewport.style.overflow = 'hidden'; // Блокируем основной скролл
+        }
+        
+        // Сбрасываем скролл самой модалки в самый верх (убирает баги отображения)
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.scrollTop = 0;
+        }
+
         if (item.images && item.images.length > 1) {
             updateSliderDisplay(); 
         }
@@ -659,8 +665,15 @@ function openFullInfo(title, text, images) {
 }
 function closeNewsModal() {
     const modal = document.getElementById('news-modal');
+    const viewport = document.querySelector('.content-viewport');
+
     if (modal) {
         modal.style.display = 'none';
+    }
+    
+    // Возвращаем скролл основному контенту
+    if (viewport) {
+        viewport.style.overflow = 'auto';
     }
 }
 let fullSchedule = null; // Здесь будем хранить весь JSON
