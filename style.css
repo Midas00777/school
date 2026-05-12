@@ -1751,3 +1751,58 @@ body {
     margin: 0;
     letter-spacing: -0.5px;
 }
+/* Контейнер для кнопок классов */
+#class-buttons-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Одинаковая ширина */
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.class-btn {
+    padding: 15px 10px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1e293b;
+    transition: all 0.2s;
+}
+
+/* Эффект при выборе класса */
+.class-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+.custom-section-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 10px 0;
+}
+
+.icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.icon-box .material-icons-round { font-size: 32px; }
+
+.bg-canteen { background: linear-gradient(135deg, #ff6b6b, #ff8787); }
+.bg-schedule { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+.custom-section-header h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    color: #1e293b;
+}
