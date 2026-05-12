@@ -1806,3 +1806,27 @@ body {
     margin: 0;
     color: #1e293b;
 }
+/* Ограничиваем размер картинок в модалке */
+.modal-body-text img, 
+.news-slider img, 
+.single-image-container img {
+    max-width: 100%;
+    max-height: 70vh; /* Картинка не займет больше 70% высоты экрана */
+    object-fit: contain; /* Картинка будет вписываться целиком, не обрезаясь */
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+/* Контейнер для слайдера, чтобы он не "распирал" окно */
+.news-slider {
+    width: 100%;
+    overflow: hidden;
+    background: #f0f0f0;
+    border-radius: 12px 12px 0 0;
+}
+
+/* Класс для восстановления прокрутки */
+body.modal-open {
+    overflow: hidden;
+}
