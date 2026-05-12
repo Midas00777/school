@@ -103,6 +103,8 @@ function openSection(sectionId, clickedButton) {
     if (sectionId === 'canteen') loadCanteen();
     if (sectionId === 'schedule') loadSchedule();
     if (sectionId === 'info') loadInfo();
+    if (sectionId === 'navigation') loadRooms(); 
+    
 }
 // 2. ЧАСЫ
 function updateDateTime() {
@@ -394,29 +396,41 @@ function filterRoomsByFloor(floorNum) {
 async function loadRooms() {
     try {
         const response = await fetch('rooms.json?v=' + Date.now());
-        if (!response.ok) return;
-        allRooms = await response.json();
-        // После загрузки данных отображаем 1 этаж
-        filterRoomsByFloor(1);
+        const rooms = await response.json();
+        
+        if (!rooms || !Array.isArray(rooms)) {
+            console.error("Файл rooms.json пуст или имеет неверный формат");
+            return;
+        }
+
+        allRooms = rooms; // Обновляем глобальную переменную для поиска на карте
+        renderRooms(rooms); // Рисуем список в навигации
+        
+        console.log("Кабинеты успешно загружены:", rooms);
     } catch (e) {
-        console.error("Ошибка загрузки комнат:", e);
+        console.error("Ошибка при загрузке кабинетов:", e);
     }
 }
 
 // Отрисовка карточек кабинетов в колонке поиска
 // Пример функции отрисовки (подправь под свою)
 function renderRooms(rooms) {
-    // В твоем HTML этот блок называется 'nav-content'
     const container = document.getElementById('nav-content'); 
-    
     if (!container) return;
 
+    if (rooms.length === 0) {
+        container.innerHTML = '<div style="padding:20px; color:gray;">Кабинеты не найдены</div>';
+        return;
+    }
+
     container.innerHTML = rooms.map(room => `
-        <div class="room-item">
-            <span class="room-item-number">${room.id}</span>
+        <div class="room-item" onclick="highlightRoom('${room.id}')" style="cursor:pointer;">
+            <span class="room-item-number">${room.id || '—'}</span>
             <div class="room-info">
-                <div class="room-name">${room.name}</div>
-                <div class="room-teacher">${room.teacher}</div>
+                <div class="room-name">${room.name || 'Без названия'}</div>
+                <div class="room-teacher" style="font-size: 0.9em; color: var(--text-muted);">
+                    ${room.teacher || 'Педагог не указан'}
+                </div>
             </div>
         </div>
     `).join('');

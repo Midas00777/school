@@ -1928,3 +1928,7 @@ body.no-scroll {
     overflow-y: auto !important; /* Убедимся, что по умолчанию скролл есть */
     -webkit-overflow-scrolling: touch; /* Для плавности на мобильных */
 }
+#nav-content {
+    overflow-y: auto;
+    max-height: 500px; /* или любая удобная высота */
+}
