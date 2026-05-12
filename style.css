@@ -272,8 +272,11 @@ body {
     overflow: hidden;
     box-shadow: var(--shadow);
     border-collapse: collapse;
+    /* Добавим фиксированный алгоритм, чтобы колонки не прыгали */
+    table-layout: auto; 
 }
 
+/* Стили для заголовков */
 .schedule-table th {
     background: var(--primary);
     color: white;
@@ -282,6 +285,17 @@ body {
     font-size: 20px;
 }
 
+/* Специфичные стили для ПЕРВОЙ колонки (ВРЕМЯ) */
+.schedule-table th:first-child,
+.schedule-table td:first-child {
+    width: 1%; /* Заставляет колонку сжаться до минимально возможной ширины контента */
+    white-space: nowrap; /* ЗАПРЕЩАЕТ перенос строки (время будет в одну линию) */
+    padding-right: 30px; /* Добавляет отступ справа, чтобы время не прилипало к предмету */
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Общие стили для ячеек */
 .schedule-table td {
     padding: 15px 20px;
     border-bottom: 1px solid #f1f5f9;
@@ -290,16 +304,6 @@ body {
 
 .schedule-table tr:last-child td { border: none; }
 .schedule-table tr:hover { background: #f8fafc; }
-
-.current-day-label {
-    display: inline-block;
-    padding: 8px 15px;
-    background: #dcfce7;
-    color: #166534;
-    border-radius: 10px;
-    font-weight: 700;
-    margin-bottom: 20px;
-}
 /* Контейнер для карточек кабинетов */
 .rooms-grid {
     display: grid;

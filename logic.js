@@ -756,31 +756,34 @@ function showClassSchedule(shiftKey, className, btn) {
         const dayData = data[dayName] || data[dayName.toLowerCase()] || data[dayName.toUpperCase()];
         
         if (dayData) {
-            html += `
-                <div class="day-block" style="margin-bottom: 25px;">
-                    <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px; text-transform: uppercase;">${dayName}</h3>
-                    <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <thead style="background: #f1f5f9;">
-                            <tr>
-                                <th style="padding: 12px; border: 1px solid #e2e8f0; width: 40px;">№</th>
-                                <th style="padding: 12px; border: 1px solid #e2e8f0; width: 110px;">Время</th>
-                                <th style="padding: 12px; border: 1px solid #e2e8f0;">Предмет</th>
-                                <th style="padding: 12px; border: 1px solid #e2e8f0; width: 70px;">Каб.</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${dayData.map(lesson => `
-                                <tr>
-                                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${lesson.num || ''}</td>
-                                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center;">${lesson.time || ''}</td>
-                                    <td style="padding: 12px; border: 1px solid #e2e8f0;">${lesson.name || lesson.subject}</td>
-                                    <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #2563eb; font-weight: bold;">${lesson.room || ''}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
+            // Найди этот кусок внутри функции showClassSchedule в logic.js
+// И замени формирование thead и tbody на этот:
+
+html += `
+    <div class="day-block" style="margin-bottom: 25px;">
+        <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px; text-transform: uppercase;">${dayName}</h3>
+        <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); table-layout: auto;">
+            <thead style="background: #f1f5f9;">
+                <tr>
+                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 40px;">№</th>
+                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 150px; white-space: nowrap;">Время</th>
+                    <th style="padding: 12px; border: 1px solid #e2e8f0;">Предмет</th>
+                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 70px;">Каб.</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${dayData.map(lesson => `
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${lesson.num || ''}</td>
+                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; white-space: nowrap;">${lesson.time || ''}</td>
+                        <td style="padding: 12px; border: 1px solid #e2e8f0;">${lesson.name || lesson.subject}</td>
+                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #2563eb; font-weight: bold;">${lesson.room || ''}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    </div>
+`;
         }
     });
 
