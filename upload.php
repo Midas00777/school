@@ -5,23 +5,37 @@ header('Content-Type: application/json; charset=utf-8');
 
 $response = ["status" => "error", "message" => "Неизвестная ошибка"];
 
-// 1. УДАЛЕНИЕ
+// 1. КАРТА СООТВЕТСТВИЯ ТИПОВ И ФАЙЛОВ
+$filesMap = [
+    'news'     => 'news.json',
+    'room'     => 'rooms.json', // Исправлено: теперь строго rooms.json
+    'info'     => 'info.json',
+    'schedule' => 'schedule.json'
+];
+
+// 2. ЛОГИКА УДАЛЕНИЯ
 if (isset($_POST['action']) && $_POST['action'] === 'delete') {
-    $filesMap = ['news' => 'news.json', 'room' => 'rooms.json', 'info' => 'info.json', 'schedule' => 'schedule.json'];
-    $json = $filesMap[$_POST['type']];
-    $data = json_decode(file_get_contents($json), true);
-    array_splice($data, (int)$_POST['index'], 1);
-    file_put_contents($json, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-    echo json_encode(['status' => 'success', 'message' => 'Удалено']);
+    $type = $_POST['type'] ?? '';
+    $jsonFile = $filesMap[$type] ?? ($type . '.json');
+
+    if (file_exists($jsonFile)) {
+        $data = json_decode(file_get_contents($jsonFile), true);
+        if (is_array($data)) {
+            array_splice($data, (int)$_POST['index'], 1);
+            file_put_contents($jsonFile, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+            echo json_encode(['status' => 'success', 'message' => 'Удалено']);
+            exit;
+        }
+    }
+    echo json_encode(['status' => 'error', 'message' => 'Файл не найден']);
     exit;
 }
 
-// 2. ЗАГРУЗКА ФАЙЛОВ
+// 3. ЗАГРУЗКА ИЗОБРАЖЕНИЙ
 $uploadedFiles = [];
-$type = $_POST['type'] ?? ''; // Получаем тип заранее
+$type = $_POST['type'] ?? '';
 
 if (isset($_FILES['files'])) {
-    // Определяем подпапку в зависимости от типа
     $subDir = ($type === 'info') ? 'info/' : 'news/';
     $uploadDir = 'uploads/' . $subDir;
     
@@ -39,33 +53,50 @@ if (isset($_FILES['files'])) {
     }
 }
 
-// 3. ОБРАБОТКА ДАННЫХ
-$type = $_POST['type'] ?? '';
+// 4. ПОДГОТОВКА ДАННЫХ ДЛЯ СОХРАНЕНИЯ
 $editIndex = isset($_POST['edit_index']) ? (int)$_POST['edit_index'] : -1;
-$jsonFile = $type . '.json';
+$jsonFile = $filesMap[$type] ?? ($type . '.json');
+
+// Загружаем текущие данные из правильного файла
 $data = file_exists($jsonFile) ? json_decode(file_get_contents($jsonFile), true) : [];
+if (!is_array($data)) $data = [];
+
+$newItem = [];
 
 if ($type === 'news' || $type === 'info') {
    $newItem = [
         'title' => $_POST['title'] ?? '',
         'text' => $_POST['text'] ?? '',
         'date' => date('d.m.Y H:i'),
-        // Теперь всегда сохраняем в массив images
         'images' => !empty($uploadedFiles) ? $uploadedFiles : ($editIndex >= 0 ? ($data[$editIndex]['images'] ?? []) : [])
     ];
 } elseif ($type === 'room') {
-    $newItem = ['id' => $_POST['room_id'], 'name' => $_POST['room_name'], 'teacher' => $_POST['room_teacher'], 'floor' => $_POST['room_floor']];
+    $newItem = [
+        'id'      => $_POST['room_id'], 
+        'name'    => $_POST['room_name'], 
+        'teacher' => $_POST['room_teacher'], 
+        'floor'   => $_POST['room_floor']
+    ];
 }
 
-// 4. СОХРАНЕНИЕ
+// 5. СОХРАНЕНИЕ (ОБНОВЛЕНИЕ ИЛИ ДОБАВЛЕНИЕ)
 if ($editIndex >= 0) {
     $data[$editIndex] = $newItem;
-    $message = "Обновлено";
+    $message = "Обновлено успешно";
 } else {
-    array_unshift($data, $newItem);
-    $message = "Добавлено";
+    // Новые новости — в начало, новые комнаты — в конец
+    if ($type === 'room') {
+        $data[] = $newItem; 
+    } else {
+        array_unshift($data, $newItem);
+    }
+    $message = "Добавлено успешно";
 }
 
-file_put_contents($jsonFile, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-echo json_encode(['status' => 'success', 'message' => $message]);
+// Записываем результат в файл
+if (file_put_contents($jsonFile, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))) {
+    echo json_encode(['status' => 'success', 'message' => $message]);
+} else {
+    echo json_encode(['status' => 'error', 'message' => 'Не удалось записать в файл']);
+}
 exit;

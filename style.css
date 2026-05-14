@@ -19,12 +19,62 @@
     font-family: 'Inter', sans-serif;
 }
 
+/* В самом начале файла или там где селектор body */
 body {
     min-height: 100vh;
     background-color: var(--bg-color);
     color: var(--text-main);
     overflow-x: hidden;
-    overflow-y: auto;
+    /* Удали отсюда фиксированный overflow-y, если он есть, пусть будет по умолчанию */
+}
+
+/* Основной контейнер модалки (черный фон) */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Чуть плотнее фон */
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    overflow: hidden; /* ЗАПРЕЩАЕМ скролл здесь (убирает первый бегунок) */
+}
+
+/* Белое окошко с контентом */
+.modal-content {
+    background: var(--white);
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh; /* Ограничиваем высоту окна */
+    border-radius: 24px;
+    position: relative;
+    display: flex;
+    flex-direction: column; /* Картинка сверху, текст снизу */
+    overflow-y: auto; /* РАЗРЕШАЕМ скролл только здесь (остается один бегунок) */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Тонкий красивый скроллбар (только для Chrome/Edge/Safari) */
+.modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 0 24px 24px 0;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #999;
 }
 
 .app-container {
@@ -222,8 +272,11 @@ body {
     overflow: hidden;
     box-shadow: var(--shadow);
     border-collapse: collapse;
+    /* Добавим фиксированный алгоритм, чтобы колонки не прыгали */
+    table-layout: auto; 
 }
 
+/* Стили для заголовков */
 .schedule-table th {
     background: var(--primary);
     color: white;
@@ -232,6 +285,17 @@ body {
     font-size: 20px;
 }
 
+/* Специфичные стили для ПЕРВОЙ колонки (ВРЕМЯ) */
+.schedule-table th:first-child,
+.schedule-table td:first-child {
+    width: 1%; /* Заставляет колонку сжаться до минимально возможной ширины контента */
+    white-space: nowrap; /* ЗАПРЕЩАЕТ перенос строки (время будет в одну линию) */
+    padding-right: 30px; /* Добавляет отступ справа, чтобы время не прилипало к предмету */
+    font-weight: 600;
+    color: var(--primary);
+}
+
+/* Общие стили для ячеек */
 .schedule-table td {
     padding: 15px 20px;
     border-bottom: 1px solid #f1f5f9;
@@ -240,16 +304,6 @@ body {
 
 .schedule-table tr:last-child td { border: none; }
 .schedule-table tr:hover { background: #f8fafc; }
-
-.current-day-label {
-    display: inline-block;
-    padding: 8px 15px;
-    background: #dcfce7;
-    color: #166534;
-    border-radius: 10px;
-    font-weight: 700;
-    margin-bottom: 20px;
-}
 /* Контейнер для карточек кабинетов */
 .rooms-grid {
     display: grid;
@@ -1750,4 +1804,150 @@ body {
     color: #1e293b;
     margin: 0;
     letter-spacing: -0.5px;
+}
+/* Контейнер для кнопок классов */
+#class-buttons-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); /* Одинаковая ширина */
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.class-btn {
+    padding: 15px 10px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1e293b;
+    transition: all 0.2s;
+}
+
+/* Эффект при выборе класса */
+.class-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+.custom-section-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding: 10px 0;
+}
+
+.icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.icon-box .material-icons-round { font-size: 32px; }
+
+.bg-canteen { background: linear-gradient(135deg, #ff6b6b, #ff8787); }
+.bg-schedule { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+
+.custom-section-header h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0;
+    color: #1e293b;
+}
+/* Ограничиваем размер картинок в модалке */
+.modal-body-text img, 
+.news-slider img, 
+.single-image-container img {
+    max-width: 100%;
+    max-height: 70vh; /* Картинка не займет больше 70% высоты экрана */
+    object-fit: contain; /* Картинка будет вписываться целиком, не обрезаясь */
+    display: block;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+/* Контейнер для слайдера, чтобы он не "распирал" окно */
+.news-slider {
+    width: 100%;
+    overflow: hidden;
+    background: #f0f0f0;
+    border-radius: 12px 12px 0 0;
+}
+
+/* Класс для восстановления прокрутки */
+body.modal-open {
+    overflow: hidden;
+}
+#modal-body {
+    max-height: 90vh;
+    overflow-y: auto; /* Если текст новости очень длинный, он будет скроллиться внутри модалки */
+}
+
+#modal-body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px 12px 0 0;
+}
+
+.news-slider {
+    background: #000;
+    max-height: 65vh;
+    display: flex;
+    align-items: center;
+}
+html, body {
+    /* Это обеспечит плавный возврат скролла и уберет возможные подергивания */
+    height: auto;
+    min-height: 100%;
+}
+
+/* Если ты используешь класс для активной модалки (опционально) */
+body.modal-open {
+    overflow: hidden;
+}
+/* Класс для блокировки скролла */
+body.no-scroll {
+    overflow: hidden !important;
+    height: 100vh !important;
+    width: 100% !important;
+    position: fixed !important; /* Гарантированная блокировка на мобильных */
+}
+/* Специальный класс для блокировки скролла */
+.no-scroll {
+    overflow: hidden !important;
+    height: 100vh !important;
+    width: 100% !important;
+    position: fixed !important; /* Это останавливает скролл намертво */
+    left: 0;
+    top: 0;
+}
+.content-viewport {
+    overflow-y: auto !important; /* Убедимся, что по умолчанию скролл есть */
+    -webkit-overflow-scrolling: touch; /* Для плавности на мобильных */
+}
+#nav-content {
+    overflow-y: auto;
+    max-height: 500px; /* или любая удобная высота */
+}
+.lesson-name, .lesson-room {
+    white-space: pre-line; /* Чтобы переносы строк из JSON отображались */
+}
+/* Стили для разделения подгрупп в таблице расписания */
+.sub-group {
+    display: block;
+    padding: 3px 0;
+    line-height: 1.2;
+}
+
+.group-divider {
+    height: 1px;
+    background-color: #e2e8f0; /* Цвет границ таблицы */
+    margin: 4px 0;
 }
