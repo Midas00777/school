@@ -1936,3 +1936,18 @@ body.no-scroll {
     overflow-y: auto;
     max-height: 500px; /* или любая удобная высота */
 }
+.lesson-name, .lesson-room {
+    white-space: pre-line; /* Чтобы переносы строк из JSON отображались */
+}
+/* Стили для разделения подгрупп в таблице расписания */
+.sub-group {
+    display: block;
+    padding: 3px 0;
+    line-height: 1.2;
+}
+
+.group-divider {
+    height: 1px;
+    background-color: #e2e8f0; /* Цвет границ таблицы */
+    margin: 4px 0;
+}

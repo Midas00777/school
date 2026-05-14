@@ -752,42 +752,70 @@ function showClassSchedule(shiftKey, className, btn) {
 
     // Перебираем строго по нашему списку
     daysOrder.forEach(dayName => {
-        // Ищем данные дня (проверяем все варианты написания)
         const dayData = data[dayName] || data[dayName.toLowerCase()] || data[dayName.toUpperCase()];
         
-        if (dayData) {
-            // Найди этот кусок внутри функции showClassSchedule в logic.js
-// И замени формирование thead и tbody на этот:
+        if (dayData && Array.isArray(dayData)) {
+            
+            // --- ЛОГИКА СКЛЕИВАНИЯ СДВОЕННЫХ УРОКОВ ---
+            const mergedLessons = [];
+            
+            dayData.forEach(lesson => {
+                const subjName = lesson.name || lesson.subject || '';
+                if (!subjName || subjName.toLowerCase() === 'nan') return;
 
-html += `
-    <div class="day-block" style="margin-bottom: 25px;">
-        <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px; text-transform: uppercase;">${dayName}</h3>
-        <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); table-layout: auto;">
-            <thead style="background: #f1f5f9;">
-                <tr>
-                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 40px;">№</th>
-                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 150px; white-space: nowrap;">Время</th>
-                    <th style="padding: 12px; border: 1px solid #e2e8f0;">Предмет</th>
-                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 70px;">Каб.</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${dayData.map(lesson => `
-                    <tr>
-                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold;">${lesson.num || ''}</td>
-                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; white-space: nowrap;">${lesson.time || ''}</td>
-                        <td style="padding: 12px; border: 1px solid #e2e8f0;">${lesson.name || lesson.subject}</td>
-                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #2563eb; font-weight: bold;">${lesson.room || ''}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    </div>
-`;
+                const lessonTime = (lesson.time || '').trim();
+
+                // Если у урока ЕСТЬ время или список пока пуст — это начало урока
+                if (lessonTime !== "" || mergedLessons.length === 0) {
+                    // Оборачиваем тексты в <span> для удобного выравнивания
+                    mergedLessons.push({
+                        num: lesson.num || '',
+                        time: lessonTime,
+                        name: `<span class="sub-group">${subjName}</span>`,
+                        room: `<span class="sub-group">${lesson.room || ''}</span>`
+                    });
+                } else {
+                    // Если времени НЕТ — добавляем вторую группу с новой строки
+                    // Используем стилизованный разделитель или просто перенос
+                    const last = mergedLessons[mergedLessons.length - 1];
+                    last.name += `<div class="group-divider"></div><span class="sub-group">${subjName}</span>`;
+                    
+                    const newRoom = lesson.room || '';
+                    last.room += `<div class="group-divider"></div><span class="sub-group">${newRoom}</span>`;
+                }
+            });
+
+            if (mergedLessons.length > 0) {
+                html += `
+                    <div class="day-block" style="margin-bottom: 25px;">
+                        <h3 style="color: #2563eb; margin-bottom: 10px; padding-left: 5px; text-transform: uppercase;">${dayName}</h3>
+                        <table class="schedule-table" style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); table-layout: auto;">
+                            <thead style="background: #f1f5f9;">
+                                <tr>
+                                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 40px;">№</th>
+                                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 150px; white-space: nowrap;">Время</th>
+                                    <th style="padding: 12px; border: 1px solid #e2e8f0;">Предмет</th>
+                                    <th style="padding: 12px; border: 1px solid #e2e8f0; width: 70px;">Каб.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${mergedLessons.map(lesson => `
+                                    <tr>
+                                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; font-weight: bold; vertical-align: middle;">${lesson.num}</td>
+                                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; white-space: nowrap; vertical-align: middle;">${lesson.time}</td>
+                                        <td style="padding: 12px; border: 1px solid #e2e8f0; vertical-align: middle;">${lesson.name}</td>
+                                        <td style="padding: 12px; border: 1px solid #e2e8f0; text-align: center; color: #2563eb; font-weight: bold; vertical-align: middle;">${lesson.room}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
         }
     });
 
-    container.innerHTML = html;
+    container.innerHTML = html || '<div style="padding:20px;">Нет уроков</div>';
 }   
 // Автоматическая загрузка первой смены при открытии раздела
 function loadSchedule() {
