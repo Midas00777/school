@@ -1951,3 +1951,133 @@ body.no-scroll {
     background-color: #e2e8f0; /* Цвет границ таблицы */
     margin: 4px 0;
 }
+/* 1. ПРИКРЕПЛЯЕМ НИЖНЮЮ ПАНЕЛЬ К ЭКРАНУ НАМЕРТВО */
+footer, .bottom-nav, .nav-bar, .bottom-panel {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important; /* Панель всегда будет поверх скроллящихся новостей */
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important; /* Красивая тень сверху панели */
+}
+
+/* 2. ДОБАВЛЯЕМ ОТСТУП ДЛЯ КОНТЕНТА */
+/* Чтобы фиксированная нижняя панель не перекрывала самые нижние новости при скролле */
+body, .main-container, .content-viewport {
+    padding-bottom: 120px !important; /* Высота твоей панели + запас */
+    box-sizing: border-box;
+}
+
+/* 3. ВЕРТИКАЛЬНАЯ ЛЕНТА НОВОСТЕЙ (В СТИЛЕ ВК) */
+.news-feed-vk {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Отступы между карточками сверху вниз */
+    max-width: 800px; /* Ограничиваем ширину для красоты, как в соцсетях */
+    margin: 0 auto;
+    padding: 15px;
+}
+
+.news-card-vk {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    cursor: pointer;
+}
+
+/* 4. КОНТЕЙНЕР ДЛЯ МЕДИА (КАРТИНКА БЕЗ ОБРЕЗКИ) */
+.news-vk-media {
+    width: 100%;
+    background: #f0f2f5; /* Серый фон на случай, если картинка узкая */
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.news-vk-img {
+    width: 100%;
+    height: auto; /* Высота подстраивается автоматически под пропорции */
+    max-height: 750px; /* Ограничение, чтобы слишком длинные фото не занимали весь экран */
+    object-fit: contain !important; /* КРИТИЧЕСКИ ВАЖНО: картинка отображается ЦЕЛИКОМ, без сжатий и обрезок */
+    display: block;
+}
+/* ======================================================= */
+/* 1. СБРОС СТАРЫХ НАСТРОЕК И ВОЗВРАТ РАБОЧЕГО СКРОЛЛА */
+/* ======================================================= */
+html, body, .main-container, .content-viewport {
+    position: static !important;
+    overflow: auto !important;
+    height: 100% !important;
+}
+
+/* ======================================================= */
+/* 2. КЛАСС ДЛЯ НИЖНЕЙ ПАНЕЛИ (ПОДСТАВИТСЯ ЧЕРЕЗ JS ПОЗЖЕ) */
+/* ======================================================= */
+.fixed-bottom-panel-vk {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;      /* Панель строго поверх ленты */
+    background: #ffffff !important; /* Укажи цвет фона твоей панели (например #ffffff или #1e293b) */
+    margin: 0 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08) !important; /* Красивая тень сверху */
+}
+
+/* ======================================================= */
+/* 3. ВЕРТИКАЛЬНАЯ ЛЕНТА НОВОСТЕЙ С ОТСТУПОМ ПОД ПАНЕЛЬ */
+/* ======================================================= */
+.news-feed-vk {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+    /* 140px снизу — это буфер, чтобы последняя новость не пряталась за панелью */
+    padding: 15px 15px 140px 15px !important; 
+    box-sizing: border-box !important;
+}
+
+/* Карточка новости */
+.news-card-vk {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    cursor: pointer;
+}
+
+/* Контейнер картинок (БЕЗ ОБРЕЗКИ И СЖАТИЯ) */
+.news-vk-media {
+    width: 100%;
+    background: #f0f2f5; 
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.news-vk-img {
+    width: 100%;
+    height: auto; 
+    max-height: 750px; 
+    object-fit: contain !important; /* Картинка сохраняет пропорции */
+    display: block;
+}
+/* --- КРИТИЧЕСКИЙ ФИКС ДЛЯ ДЛИННЫХ ЗАГОЛОВКОВ --- */
+.news-title, h3 { /* Подставь свой класс заголовка или используй общий сегмент h3 */
+    word-wrap: break-word !important;   /* Заставляет переносить длинные слова */
+    overflow-wrap: break-word !important; /* Современный аналог word-wrap */
+    hyphens: auto !important;             /* Добавляет переносы, если текст длинный */
+    max-width: 100% !important;           /* Запрещает выходить за ширину контейнера */
+}

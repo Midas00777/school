@@ -190,43 +190,52 @@ async function loadFloor(floorNum, btn) {
 // 4. ЗАГРУЗКА ДАННЫХ (НОВОСТИ, СТОЛОВАЯ, РАСПИСАНИЕ)
 // ==========================================
 // --- 1. ЗАГРУЗКА НОВОСТЕЙ (Универсальная) ---
+// --- 1. ЗАГРУЗКА НОВОСТЕЙ (Вертикальная лента ВК без обрезки фото) ---
 async function loadNews() {
     const container = document.getElementById('news-container');
     if (!container) return;
 
     try {
+        // Загружаем данные с защитой от кэширования браузером
         const response = await fetch('news.json?v=' + Date.now());
         const news = await response.json();
         
+        // Принудительно задаем контейнеру класс нашей новой вертикальной ленты
+        container.className = 'news-feed-vk';
+
         container.innerHTML = news.map((item, index) => {
-            // Ищем картинку в разных полях (file, files или images)
+            // Ищем картинку в полях объекта новостей
             let previewImg = '';
             if (item.images && item.images.length > 0) previewImg = item.images[0];
             else if (item.files && item.files.length > 0) previewImg = item.files[0];
             else if (item.file) previewImg = item.file;
 
-            // Если путь пустой или это .txt — ставим заглушку
-            if (!previewImg || typeof previewImg !== 'string' || previewImg.endsWith('.txt')) {
-                previewImg = 'https://placehold.co/600x400?text=Нет+фото';
+            // Формируем блок картинки, только если она существует и это не текстовый файл
+            let imageHtml = '';
+            if (previewImg && typeof previewImg === 'string' && !previewImg.endsWith('.txt')) {
+                imageHtml = `
+                    <div class="news-vk-media">
+                        <img src="${previewImg}" class="news-vk-img" alt="Фото новости" 
+                             onerror="this.style.display='none'">
+                    </div>
+                `;
             }
 
+            // Рендерим карточку. Текст выводится целиком (item.text), без ограничений.
             return `
-                <div class="news-card" onclick="openNewsModal(${index})">
-                    <div class="news-media-container" style="width: 100%; height: 200px; overflow: hidden; background: #eee;">
-                        <img src="${previewImg}" style="width: 100%; height: 100%; object-fit: cover;" 
-                             onerror="this.src='https://placehold.co/600x400?text=Ошибка+пути'">
-                    </div>
+                <div class="news-card-vk" onclick="openNewsModal(${index})">
                     <div class="news-content">
-                        <span class="news-date">${item.date || ''}</span>
-                        <h3>${item.title || 'Новость'}</h3>
-                        <p>${item.text ? item.text.substring(0, 80) + '...' : ''}</p> 
+                        <span style="font-size: 0.9rem; color: #65676b; display: block; margin-bottom: 6px;">${item.date || ''}</span>
+                        <h3 style="font-size: 1.4rem; margin: 0 0 10px 0; color: #050505; font-weight: 700;">${item.title || 'Новость'}</h3>
+                        <p style="font-size: 1.05rem; line-height: 1.5; color: #050505; white-space: pre-wrap; margin: 0;">${item.text || ''}</p> 
                     </div>
+                    ${imageHtml}
                 </div>`;
         }).join('');
 
         window.currentNews = news; 
     } catch (e) {
-        console.error("Ошибка загрузки новостей:", e);
+        console.error("Ошибка при генерации ленты новостей:", e);
     }
 }
 
@@ -1030,3 +1039,21 @@ function backToCanteenSelection() {
     document.getElementById('canteen-selection').style.display = 'grid';
     document.getElementById('canteen-viewer').style.display = 'none';
 }
+// Автоматическое нахождение и фиксация нижней панели навигации
+document.addEventListener('DOMContentLoaded', () => {
+    // Ищем любую кнопку навигации в твоем проекте
+    const anyNavBtn = document.querySelector('.nav-btn');
+    
+    if (anyNavBtn) {
+        // Берем её непосредственного родителя (саму плашку меню)
+        const parentPanel = anyNavBtn.parentElement;
+        
+        if (parentPanel) {
+            // Присваиваем ей наш безопасный CSS-класс фиксации
+            parentPanel.classList.add('fixed-bottom-panel-vk');
+            console.log("Нижняя панель успешно зафиксирована!");
+        }
+    } else {
+        console.warn("Не удалось найти элементы с классом .nav-btn для фиксации панели.");
+    }
+});
