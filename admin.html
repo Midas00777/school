@@ -186,7 +186,8 @@
 
     <div id="tab-rooms" class="tab-content" style="display:none">
         <form id="roomForm">
-            <input type="hidden" name="type" value="room">
+        <input type="hidden" name="type" value="room">
+        <input type="hidden" name="edit_index" value="-1">
             <div class="form-grid">
                 <input type="text" name="room_id" placeholder="№ Кабинета" required>
                 <input type="text" name="room_name" placeholder="Предмет" required>
@@ -244,61 +245,68 @@
 
 <script>
     async function uploadMenuFile(type) {
-    const fileInput = document.getElementById('file-' + type);
-    const status = document.getElementById('upload-status');
-    
-    if (!fileInput || fileInput.files.length === 0) {
-        alert("Пожалуйста, выберите файл!");
-        return;
-    }
-
-    const file = fileInput.files[0];
-    const formData = new FormData();
-    formData.append('menu_file', file);
-    formData.append('menu_type', type); // 'regular' или 'diabetic'
-
-    status.innerText = "Загрузка файла...";
-    status.style.color = "blue";
-
-    try {
-        const response = await fetch('upload_menu.php', {
-            method: 'POST',
-            body: formData
-        });
+        const fileInput = document.getElementById('file-' + type);
+        const status = document.getElementById('upload-status');
         
-        const result = await response.json();
-        
-        if (result.status === 'success') {
-            status.innerText = "✅ Файл успешно обновлен!";
-            status.style.color = "green";
-            fileInput.value = ""; // Очистить поле после загрузки
-        } else {
-            status.innerText = "❌ Ошибка: " + result.message;
+        if (!fileInput || fileInput.files.length === 0) {
+            alert("Пожалуйста, выберите файл!");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('menu_file', file);
+        formData.append('menu_type', type);
+
+        status.innerText = "Загрузка файла...";
+        status.style.color = "blue";
+
+        try {
+            const response = await fetch('upload_menu.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                status.innerText = "✅ Файл успешно обновлен!";
+                status.style.color = "green";
+                fileInput.value = "";
+            } else {
+                status.innerText = "❌ Ошибка: " + result.message;
+                status.style.color = "red";
+            }
+        } catch (error) {
+            console.error(error);
+            status.innerText = "❌ Ошибка сервера. Проверьте файл upload_menu.php";
             status.style.color = "red";
         }
-    } catch (error) {
-        console.error(error);
-        status.innerText = "❌ Ошибка сервера. Проверьте файл upload_menu.php";
-        status.style.color = "red";
     }
-}
+
     function resetInfoForm() {
-    const form = document.getElementById('infoForm');
-    form.reset();
-    document.getElementById('info_edit_index').value = "-1";
-    document.getElementById('info_submit_btn').innerText = "Добавить инфо";
-    document.getElementById('info_cancel_btn').style.display = "none";
-}
+        const form = document.getElementById('infoForm');
+        form.reset();
+        document.getElementById('info_edit_index').value = "-1";
+        document.getElementById('info_submit_btn').innerText = "Добавить инфо";
+        document.getElementById('info_cancel_btn').style.display = "none";
+    }
+
     // --- ПЕРЕКЛЮЧЕНИЕ ТАБОВ ---
     function switchTab(tab) {
         document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('tab-' + tab).style.display = 'block';
+        
+        // КРИТИЧЕСКИЙ ФИКС: так как вкладка называется 'rooms', а тип данных 'room'
+        const targetTab = tab === 'rooms' ? 'room' : tab;
+        
+        document.getElementById('tab-' + (tab === 'room' ? 'rooms' : tab)).style.display = 'block';
         event.currentTarget.classList.add('active');
-        loadDataList(tab);
+        
+        loadDataList(targetTab);
     }
 
-    // --- УНИВЕРСАЛЬНАЯ ОТПРАВКА (ОДИН ОБРАБОТЧИК) ---
+    // --- УНИВЕРСАЛЬНАЯ ОТПРАВКА (БЕЗОПАСНАЯ) ---
     document.querySelectorAll('form').forEach(form => {
         form.onsubmit = async (e) => {
             e.preventDefault();
@@ -313,7 +321,6 @@
                 const res = await fetch('upload.php', { method: 'POST', body: formData });
                 const text = await res.text();
                 
-                // Обработка возможного склеенного JSON (если PHP глючит)
                 let cleanText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
                 const data = JSON.parse(cleanText);
                 
@@ -321,12 +328,19 @@
                 
                 if (data.status === 'success') {
                     form.reset();
-                    // Сброс индекса редактирования
+                    
+                    // Сброс индекса редактирования (универсальный для всех форм)
                     const editIdx = form.querySelector('[name="edit_index"]');
                     if (editIdx) editIdx.value = "-1";
                     
-                    const infoBtn = document.getElementById('info_submit_btn');
-                    if (infoBtn) infoBtn.innerText = "Добавить карточку инфо";
+                    // Возвращаем текст кнопкам после успешного изменения
+                    if (form.id === 'roomForm') {
+                        form.querySelector('button[type="submit"]').innerText = "Добавить кабинет";
+                    } else if (form.id === 'infoForm') {
+                        document.getElementById('info_submit_btn').innerText = "Добавить инфо";
+                    } else if (form.id === 'newsForm') {
+                        form.querySelector('button[type="submit"]').innerText = "Опубликовать новость";
+                    }
 
                     loadDataList(formData.get('type'));
                 }
@@ -339,100 +353,120 @@
         };
     });
 
-    // --- ЗАГРУЗКА СПИСКОВ ---
-    // --- ЗАГРУЗКА СПИСКОВ ДАННЫХ В АДМИНКЕ ---
-async function loadDataList(type) {
-    const containerMap = {
-        'news': 'list-news', 
-        'room': 'list-rooms', 
-        'canteen': 'list-canteen',
-        'info': 'list-info', 
-        'schedule': 'list-schedule'
-    };
-    
-    const files = { 
-        news: 'news.json', 
-        room: 'rooms.json', 
-        canteen: 'canteen.json', 
-        info: 'info.json', 
-        schedule: 'schedule.json' 
-    };
+    // --- ОБНОВЛЕННАЯ ЗАГРУЗКА СПИСКОВ (СВЕРХУ ВНИЗ) ---
+    async function loadDataList(type) {
+        // Если случайно передалось множественное число от вкладки, приводим к единому стандарту
+        if (type === 'rooms') type = 'room';
 
-    const container = document.getElementById(containerMap[type]);
-    if (!container) return;
-
-    try {
-        const res = await fetch(files[type] + '?v=' + Date.now());
-        const data = await res.json();
+        const containerMap = {
+            'news': 'list-news', 
+            'room': 'list-rooms', 
+            'canteen': 'list-canteen',
+            'info': 'list-info', 
+            'schedule': 'list-schedule'
+        };
         
-        // Заголовок списка
-        container.innerHTML = '<h4 style="margin: 20px 0 10px; color: #1e293b;">Текущие данные:</h4>';
+        // ЖЕСТКАЯ СВЯЗКА: на клиенте тип 'room', но файл на сервере ВСЕГДА rooms.json
+        const files = { 
+            news: 'news.json', 
+            room: 'rooms.json', 
+            canteen: 'canteen.json', 
+            info: 'info.json', 
+            schedule: 'schedule.json' 
+        };
 
-        if (!data || data.length === 0) {
-            container.innerHTML += '<p style="color: #64748b; font-style: italic;">Список пока пуст...</p>';
-            return;
-        }
+        const container = document.getElementById(containerMap[type]);
+        if (!container) return;
 
-        data.forEach((item, index) => {
-            // Отдельная логика для столовой (так как там вложенные массивы блюд)
-            if (type === 'canteen') {
-                container.innerHTML += `
-                    <div style="border: 1px solid #e2e8f0; padding: 15px; margin-bottom: 10px; border-radius: 12px; background: #fff;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <strong style="color: var(--primary);">${item.category}</strong>
-                        </div>
-                        ${item.items.map((dish, dIdx) => `
-                            <div class="list-item" style="margin-bottom: 5px; background: #f8fafc; padding: 8px 12px;">
-                                <span style="font-size: 0.9em;">${dish.name}</span>
-                                <button class="del-btn" onclick="deleteCanteenItem(${index}, ${dIdx})" title="Удалить блюдо">
-                                    <span class="material-icons-round" style="font-size: 18px;">delete</span>
+        try {
+            const res = await fetch(files[type] + '?v=' + Date.now());
+            if (!res.ok) throw new Error("Файл не найден");
+            
+            let data = await res.json();
+            
+            container.innerHTML = '<h4 style="margin: 20px 0 10px; color: #1e293b;">Текущие данные:</h4>';
+
+            if (!data || data.length === 0) {
+                container.innerHTML += '<p style="color: #64748b; font-style: italic;">Список пока пуст...</p>';
+                return;
+            }
+
+            // РАЗВЕРТЫВАНИЕ СПИСКА СВЕРХУ ВНИЗ (Новые элементы будут первыми)
+            // При этом сохраняем оригинальный индекс массива для корректного удаления/редактирования
+            const reversedData = data.map((item, originalIndex) => ({ item, originalIndex })).reverse();
+
+            reversedData.forEach(({ item, originalIndex }) => {
+                if (type === 'canteen') {
+                    container.innerHTML += `
+                        <div style="border: 1px solid #e2e8f0; padding: 15px; margin-bottom: 10px; border-radius: 12px; background: #fff;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <strong style="color: var(--primary);">${item.category}</strong>
+                            </div>
+                            ${item.items.map((dish, dIdx) => `
+                                <div class="list-item" style="margin-bottom: 5px; background: #f8fafc; padding: 8px 12px;">
+                                    <span style="font-size: 0.9em;">${dish.name}</span>
+                                    <button class="del-btn" onclick="deleteCanteenItem(${originalIndex}, ${dIdx})" title="Удалить блюдо">
+                                        <span class="material-icons-round" style="font-size: 18px;">delete</span>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>`;
+                } else {
+                    let title = "";
+                    let subtitle = "";
+
+                    if (type === 'room') {
+                        title = item.room_id ? `Кабинет № ${item.room_id}` : (item.id ? `Кабинет № ${item.id}` : 'Кабинет');
+                        subtitle = `${item.room_name || item.name || 'Без предмета'} — ${item.room_teacher || item.teacher || 'Учитель не указан'} (${item.room_floor || item.floor || ''})`;
+                    } else {
+                        title = item.title || item.info_title || 'Запись №' + (originalIndex + 1);
+                        subtitle = item.text || item.info_text || "";
+                    }
+
+                    container.innerHTML += `
+                        <div class="list-item">
+                            <div class="data-list-info">
+                                <strong>${title}</strong>
+                                ${subtitle ? `<p>${subtitle}</p>` : ''}
+                            </div>
+                            <div class="actions">
+                                <button class="edit-btn" onclick="editItem('${type}', ${originalIndex})" title="Редактировать">
+                                    <span class="material-icons-round">edit</span>
+                                </button>
+                                <button class="del-btn" onclick="deleteItem('${type}', ${originalIndex})" title="Удалить">
+                                    <span class="material-icons-round">delete</span>
                                 </button>
                             </div>
-                        `).join('')}
-                    </div>`;
-            } 
-            // Универсальная логика для всех остальных типов (Новости, Инфо, Кабинеты)
-            else {
-                // Определяем заголовок в зависимости от того, какие поля есть в объекте
-                const title = item.title || item.info_title || item.name || item.subject || (item.id ? 'Каб. ' + item.id : 'Запись №' + (index + 1));
-                
-                // Определяем подзаголовок (текст), чтобы показать превью
-                const subtitle = item.text || item.info_text || item.teacher || (item.time ? item.time + ' | Каб: ' + item.room : "");
-
-                container.innerHTML += `
-                    <div class="list-item">
-                        <div class="data-list-info">
-                            <strong>${title}</strong>
-                            ${subtitle ? `<p>${subtitle}</p>` : ''}
-                        </div>
-                        <div class="actions">
-                            <button class="edit-btn" onclick="editItem('${type}', ${index})" title="Редактировать">
-                                <span class="material-icons-round">edit</span>
-                            </button>
-                            <button class="del-btn" onclick="deleteItem('${type}', ${index})" title="Удалить">
-                                <span class="material-icons-round">delete</span>
-                            </button>
-                        </div>
-                    </div>`;
-            }
-        });
-    } catch (e) {
-        console.error("Ошибка при загрузке списка " + type + ":", e);
-        container.innerHTML = '<p style="color: #ef4444;">Ошибка загрузки данных. Проверьте JSON файл.</p>';
+                        </div>`;
+                }
+            });
+        } catch (e) {
+            console.warn("Ошибка при загрузке списка " + type + ":", e);
+            container.innerHTML = '<p style="color: #64748b; font-style: italic;">Данные отсутствуют или файл пуст.</p>';
+        }
     }
-}
 
     // --- УДАЛЕНИЕ ---
     async function deleteItem(type, index) {
-        if (!confirm('Удалить?')) return;
+        if (!confirm('Вы уверены, что хотите удалить эту запись?')) return;
+        
+        // Если вкладка передала 'rooms', преобразуем в 'room'
+        const dataType = type === 'rooms' ? 'room' : type;
+
         const fd = new FormData();
         fd.append('action', 'delete');
-        fd.append('type', type);
+        fd.append('type', dataType); // Отправляем 'room', чтобы PHP понял задачу
         fd.append('index', index);
-        const res = await fetch('upload.php', { method: 'POST', body: fd });
-        const data = await res.json();
-        alert(data.message);
-        loadDataList(type);
+
+        try {
+            const res = await fetch('upload.php', { method: 'POST', body: fd });
+            const data = await res.json();
+            alert(data.message);
+            loadDataList(dataType);
+        } catch (error) {
+            console.error("Ошибка при удалении:", error);
+            alert("Не удалось удалить элемент.");
+        }
     }
 
     async function deleteCanteenItem(catIndex, itemIndex) {
@@ -449,27 +483,62 @@ async function loadDataList(type) {
 
     // --- РЕДАКТИРОВАНИЕ ---
     async function editItem(type, index) {
+        if (type === 'rooms') type = 'room';
+        
         const files = { news: 'news.json', info: 'info.json', room: 'rooms.json' };
         const res = await fetch(files[type] + '?v=' + Date.now());
         const data = await res.json();
         const item = data[index];
 
         if (type === 'info') {
-            document.getElementById('info_edit_index').value = index;
-            document.getElementById('info_field_title').value = item.title || item.info_title;
-            document.getElementById('info_field_text').value = item.text || item.info_text;
+            const form = document.getElementById('infoForm');
+            form.querySelector('[name="edit_index"]').value = index;
+            form.querySelector('[name="title"]').value = item.title || item.info_title || '';
+            form.querySelector('[name="text"]').value = item.text || item.info_text || '';
             document.getElementById('info_submit_btn').innerText = "Сохранить изменения";
         } else if (type === 'news') {
             const form = document.getElementById('newsForm');
             form.querySelector('[name="edit_index"]').value = index;
-            form.querySelector('[name="title"]').value = item.title;
-            form.querySelector('[name="text"]').value = item.text;
+            form.querySelector('[name="title"]').value = item.title || '';
+            form.querySelector('[name="text"]').value = item.text || '';
             form.querySelector('button[type="submit"]').innerText = "Сохранить новость";
+        } else if (type === 'room') {
+            const form = document.getElementById('roomForm');
+            
+            // Проверяем или создаем скрытое поле edit_index в форме кабинетов
+            let editIdxInput = form.querySelector('[name="edit_index"]');
+            if (!editIdxInput) {
+                editIdxInput = document.createElement('input');
+                editIdxInput.type = 'hidden';
+                editIdxInput.name = 'edit_index';
+                form.appendChild(editIdxInput);
+            }
+            editIdxInput.value = index;
+
+            // Заполняем поля формы данными
+            form.querySelector('[name="room_id"]').value = item.room_id || item.id || '';
+            form.querySelector('[name="room_name"]').value = item.room_name || item.name || '';
+            form.querySelector('[name="room_teacher"]').value = item.room_teacher || item.teacher || '';
+            
+            // Настройка этажа
+            const floorVal = item.room_floor || (item.floor ? item.floor + " этаж" : "1 этаж");
+            form.querySelector('[name="room_floor"]').value = floorVal;
+            
+            form.querySelector('button[type="submit"]').innerText = "Сохранить изменения";
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
-    window.onload = () => loadDataList('news');
+    // Автоматическая загрузка вкладки "Новости" при первом открытии админки
+document.addEventListener('DOMContentLoaded', () => {
+    // Вариант 1: Принудительный вызов загрузки для дефолтного таба
+    loadDataList('news');
+    
+    // Вариант 2: Если нужно, чтобы вкладка визуально подсветилась как активная
+    const defaultBtn = document.querySelector('.tab-btn');
+    if (defaultBtn) {
+        defaultBtn.classList.add('active');
+    }
+});
 </script>
 
 </body>
