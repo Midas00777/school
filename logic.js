@@ -928,13 +928,32 @@ function changeScale(delta) {
 
 // Функция сброса
 function resetZoom() {
-    const img = document.querySelector('#svg-map-container img') || 
-                document.querySelector('#svg-map-container svg');
-    if (!img) return;
+    const container = document.getElementById('svg-map-container');
+    const mapImg = document.getElementById('map-img');
 
-    scale = 1;
-    currentPos = { x: 0, y: 0 };
-    updateTransform(img);
+    if (!container || !mapImg) return;
+
+    // ФИКС БАГА SVG: Если naturalWidth равен 0 (вектор не отдал размеры),
+    // берем clientWidth или подставляем жесткий дефолт (например, 1200), чтобы не делить на 0.
+    let mapWidth = mapImg.naturalWidth;
+    if (!mapWidth || mapWidth === 0) {
+        mapWidth = mapImg.clientWidth || 1200; 
+    }
+
+    const containerWidth = container.clientWidth;
+    
+    // Считаем базовый масштаб по ширине контейнера (0.95 — аккуратный отступ от краев)
+    let baseScale = (containerWidth / mapWidth) * 0.95;
+    
+    // Защита: если расчет все же сломался (NaN/Infinity), сбрасываем в 1
+    if (!isFinite(baseScale) || baseScale <= 0) {
+        baseScale = 1;
+    }
+
+    scale = baseScale;
+    currentPos = { x: 0, y: 0 }; // Строго по центру
+
+    mapImg.style.transform = `translate(${currentPos.x}px, ${currentPos.y}px) scale(${scale})`;
 }
 
 function initTouchZoom() {
@@ -1062,24 +1081,39 @@ document.addEventListener('DOMContentLoaded', () => {
 // =========================================================================
 // АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ДАННЫХ НА СТЕНДЕ (ВСТАВЛЯЕМ В САМЫЙ КОНЕЦ LOGIC.JS)
 // =========================================================================
+// =========================================================================
+// АВТОМАТИЧЕСКОЕ ОБНОВЛЕНИЕ ДАННЫХ И СИСТЕМЫ (СИНХРОНИЗАЦИЯ СЕРВЕРА)
+// =========================================================================
+
+// Текущая версия кода на этом физическом стенде
+let currentAppVersion = 1; 
+
 setInterval(() => {
-    console.log("Фоновое обновление данных с главного сервера стенда...");
+    console.log("[Sync] Проверка новых данных с главного сервера...");
     
-    // Проверяем, есть ли функции на странице стенда, и запускаем их заново
+    // 1. ПРОВЕРКА ГЛОБАЛЬНОЙ ВЕРСИИ ПРОЕКТА (Нужна ли полная перезагрузка?)
+    fetch(`version.json?t=${new Date().getTime()}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.version > currentAppVersion) {
+                console.log(`[Update] Найдена новая версия проекта (v${data.version}). Выполняю жесткую перезагрузку стенда...`);
+                // true заставляет браузер игнорировать кэш и скачать HTML/CSS/JS заново
+                window.location.reload(true); 
+            }
+        })
+        .catch(err => console.warn("Не удалось проверить версию проекта:", err));
+
+    // 2. ФОНОВОЕ ОБНОВЛЕНИЕ ДАННЫХ (Без перезагрузки страницы)
+    // Убедись, что внутри этих функций к путям fetch добавлен ?t=... (как показано в Шаге 2)
     if (typeof loadNews === 'function') {
-        loadNews(); // Перезапустит загрузку новостей (news.json)
+        loadNews(); 
     }
     
     if (typeof loadInfo === 'function') {
-        loadInfo(); // Перезапустит загрузку инфо-карточек (info.json)
+        loadInfo(); 
     }
     
-    // Перезагрузка кабинетов (в твоем logic.js массив кабинетов обычно загружается один раз,
-    // но если обновить функцию fetch для комнат, она тоже подтянет новые данные)
-    if (typeof loadRooms === 'function') {
-        loadRooms(); 
-    } else if (typeof loadAdminCabinets === 'function') {
-        loadAdminCabinets();
-    }
-
-}, 60000); // 60000 миллисекунд = 1 минута
+    // Если есть функция обновления расписания или кабинетов, добавь ее сюда
+    // if (typeof loadSchedule === 'function') loadSchedule();
+    
+}, 60000); // 60000 мс = проверка раз в минуту
