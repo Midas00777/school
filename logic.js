@@ -928,13 +928,32 @@ function changeScale(delta) {
 
 // Функция сброса
 function resetZoom() {
-    const img = document.querySelector('#svg-map-container img') || 
-                document.querySelector('#svg-map-container svg');
-    if (!img) return;
+    const container = document.getElementById('svg-map-container');
+    const mapImg = document.getElementById('map-img');
 
-    scale = 1;
-    currentPos = { x: 0, y: 0 };
-    updateTransform(img);
+    if (!container || !mapImg) return;
+
+    // ФИКС БАГА SVG: Если naturalWidth равен 0 (вектор не отдал размеры),
+    // берем clientWidth или подставляем жесткий дефолт (например, 1200), чтобы не делить на 0.
+    let mapWidth = mapImg.naturalWidth;
+    if (!mapWidth || mapWidth === 0) {
+        mapWidth = mapImg.clientWidth || 1200; 
+    }
+
+    const containerWidth = container.clientWidth;
+    
+    // Считаем базовый масштаб по ширине контейнера (0.95 — аккуратный отступ от краев)
+    let baseScale = (containerWidth / mapWidth) * 0.95;
+    
+    // Защита: если расчет все же сломался (NaN/Infinity), сбрасываем в 1
+    if (!isFinite(baseScale) || baseScale <= 0) {
+        baseScale = 1;
+    }
+
+    scale = baseScale;
+    currentPos = { x: 0, y: 0 }; // Строго по центру
+
+    mapImg.style.transform = `translate(${currentPos.x}px, ${currentPos.y}px) scale(${scale})`;
 }
 
 function initTouchZoom() {
